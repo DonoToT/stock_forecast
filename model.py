@@ -7,8 +7,7 @@ class ClsModel(nn.Module):
         super().__init__()
         self.linear1 = nn.Linear(60, 128)
         self.linear2 = nn.Linear(128, 64)
-        self.linear3 = nn.Linear(64, 9)
-
+        self.linear3 = nn.Linear(64, 10)
 
     def forward(self, x):
         x = torch.sigmoid(self.linear1(x))
@@ -22,42 +21,27 @@ class ClsModel2(nn.Module):
         super().__init__()
         self.linear1 = nn.Linear(60, 128)
         self.linear2 = nn.Linear(128, 64)
-        self.linear3 = nn.Linear(64, 10)
-
-
-    def forward(self, x):
-        x = torch.sigmoid(self.linear1(x))
-        x = torch.sigmoid(self.linear2(x))
-        x = torch.sigmoid(self.linear3(x))
-        return x
-
-
-class ClsModel3(nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.linear1 = nn.Linear(60, 128)
-        self.linear2 = nn.Linear(128, 64)
         self.linear3 = nn.Linear(64, 14)
-
+        # self.leakyrelu = nn.LeakyReLU()
 
     def forward(self, x):
         x = torch.sigmoid(self.linear1(x))
+        # x = self.dropout1(x)
         x = torch.sigmoid(self.linear2(x))
+        # x = self.dropout2(x)
         x = torch.sigmoid(self.linear3(x))
+        # x = torch.softmax(x, dim=1)
         return x
 
 
 input_x = torch.randn(1, 60)
 model1 = ClsModel()
 model2 = ClsModel2()
-model3 = ClsModel3()
 
-torch.save(model1, "model1.pth")
-torch.save(model2, "model2.pth")
-torch.save(model3, "model3.pth")
-torch.onnx.export(model1, input_x, "model1.onnx")
-torch.onnx.export(model2, input_x, "model2.onnx")
-torch.onnx.export(model3, input_x, "model3.onnx")
+torch.save(model1, "./models/model1.pth")
+torch.save(model2, "./models/model2.pth")
+torch.onnx.export(model1, input_x, "./models/model1.onnx")
+torch.onnx.export(model2, input_x, "./models/model2.onnx")
 print("--------模型已保存--------")
 
 

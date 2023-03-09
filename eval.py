@@ -26,11 +26,16 @@ import construct_data
 # print("未来1天涨跌率高于10%的概率为: {:.4}%".format(output[8] / sum * 100))
 
 
+# 251 -> 2
+# 227 -> 8
+# 223 -> 1
+# 204 -> 0
+
 def eval1():
     train_data, test_data = construct_data.construct()
-    model = torch.load("stock_forecast1.pth", map_location=torch.device('cpu'))
+    model = torch.load("./models/stock_forecast1.pth", map_location=torch.device('cpu'))
     model.eval()
-    output = model(torch.tensor(test_data[1, :60]).to(torch.float32))
+    output = model(torch.tensor(test_data[0, :60]).to(torch.float32))
     output = output.detach().numpy()
     sum = output.sum()
 
@@ -39,11 +44,12 @@ def eval1():
     print("未来1天涨跌率在-10%到-5%的概率为: {:.4}%".format(output[1] / sum * 100))
     print("未来1天涨跌率在-5%到-3%的概率为: {:.4}%".format(output[2] / sum * 100))
     print("未来1天涨跌率在-3%到-1%的概率为: {:.4}%".format(output[3] / sum * 100))
-    print("未来1天涨跌率在-1%到1%的概率为: {:.4}%".format(output[4] / sum * 100))
-    print("未来1天涨跌率在1%到3%的概率为: {:.4}%".format(output[5] / sum * 100))
-    print("未来1天涨跌率在3%到5%的概率为: {:.4}%".format(output[6] / sum * 100))
-    print("未来1天涨跌率在5%到10%的概率为: {:.4}%".format(output[7] / sum * 100))
-    print("未来1天涨跌率高于10%的概率为: {:.4}%".format(output[8] / sum * 100))
+    print("未来1天涨跌率在-1%到0%的概率为: {:.4}%".format(output[4] / sum * 100))
+    print("未来1天涨跌率在0%到1%的概率为: {:.4}%".format(output[5] / sum * 100))
+    print("未来1天涨跌率在1%到3%的概率为: {:.4}%".format(output[6] / sum * 100))
+    print("未来1天涨跌率在3%到5%的概率为: {:.4}%".format(output[7] / sum * 100))
+    print("未来1天涨跌率在5%到10%的概率为: {:.4}%".format(output[8] / sum * 100))
+    print("未来1天涨跌率高于10%的概率为: {:.4}%".format(output[9] / sum * 100))
 
 
 def eval2():
@@ -93,5 +99,5 @@ def eval3():
 
 
 eval1()
-eval2()
-eval3()
+# eval2()
+# eval3()
