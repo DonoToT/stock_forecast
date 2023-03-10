@@ -5,8 +5,8 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 import construct_data
 
-# device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-device = torch.device("cpu")
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+# device = torch.device("cpu")
 
 
 class MyDataset(Dataset):
@@ -69,10 +69,28 @@ def tot_train(model, optimizer, writer, epoch, x, y, flag):
             feature = feature.to(device)
             target = target.to(device)
             outputs = model(feature)
-            loss = loss_fn(outputs, target)
+
+            batch_size = target.size(0)
+
+            probs = torch.softmax(outputs, dim=1)
+            centers = torch.zeros(batch_size).to(device)
+            for i in range(batch_size):
+                probs_i = probs[i]
+                total_weight = torch.sum(probs_i)
+                weight_sum = torch.sum(probs_i * torch.arange(10).to(device))
+                centers[i] = weight_sum / total_weight
+            # print(centers)
+            distances = torch.pow(centers - target, 2)
+            dis_factor = 0.1
+
+            loss = loss_fn(outputs, target) + torch.sum(distances) * dis_factor
+
+
+
             total_train_loss = total_train_loss + loss.item()
             accuracy = (outputs.argmax(1) == target).sum()
             total_accuracy = total_accuracy + accuracy
+
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
@@ -107,7 +125,7 @@ def tot_train(model, optimizer, writer, epoch, x, y, flag):
         writer.add_scalar("test_accuracy", total_accuracy / test_data_size, total_test_step)
 
         total_test_step = total_test_step + 1
-        torch.save(model, "./models/stock_forecast{}.pth".format(flag))
+        torch.save(model, "./models/stock_forecast__{}.pth".format(flag))
 
 
 def train1():
@@ -156,6 +174,6 @@ def train3():
     writer.close()
 
 
-# train1()
+train1()
 # train2()
 # train3()
