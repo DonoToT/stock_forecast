@@ -85,7 +85,7 @@ def normalizing(x):
 
 def get_numpy():
     # 打开csv文件并创建reader对象
-    with open('dataset/dataset_train.csv', newline='') as csvfile:
+    with open('dataset/dataset_test.csv', newline='') as csvfile:
         reader = csv.reader(csvfile, delimiter=',')
         next(reader)  # 去掉头标签
         lists = list(reader)  # 加载到二维列表中
@@ -187,6 +187,21 @@ def construct3():
     return train_data, test_data
 
 
+def construct_test():
+    test_size = rows - 30
+    test_data = np.empty((test_size, 61))
+
+    testi = 0
+    for i in range(rows - 30):
+        one_data = np.empty(61)
+        for j in range(30):
+            one_data[j] = normalizing(data_array[i + j][2])
+            one_data[j + 30] = data_array[i + j][3]
+        test_data[testi] = one_data
+        testi += 1
+
+    return test_data
+
 data_array, rows = get_numpy()
 maxx = max(data_array[:,2])
 minn = min(data_array[:,2])
@@ -198,3 +213,5 @@ minn = min(data_array[:,2])
 # train_data, test_data = construct2()
 # train_data, test_data = construct3()
 # print(train_data, test_data)
+# testing = construct_test()
+# print(testing)

@@ -119,6 +119,7 @@ def train1():
     train_data = change_data(train_data)
     test_data = change_data(test_data)
     model = ClsModel().to(device)
+    # model = torch.load("./models/stock_forecast1.pth", map_location=torch.device('cuda'))
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
     tot_train(model, optimizer, writer, epoch, train_data, test_data, 1)
 
@@ -155,6 +156,6 @@ def train3():
     writer.close()
 
 
-train1()
+# train1()
 # train2()
 # train3()
