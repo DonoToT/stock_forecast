@@ -28,9 +28,6 @@ def change_data(x):
     return x
 
 
-learning_rate = 1e-3
-
-
 def tot_train(model, optimizer, writer, epoch, x, y, flag):
     train_dataloader = DataLoader(x, batch_size=64)
     test_dataloader = DataLoader(y, batch_size=64)
@@ -39,26 +36,27 @@ def tot_train(model, optimizer, writer, epoch, x, y, flag):
     total_train_step = 0
     total_test_step = 0
 
-    # 定义损失函数的权重
-    lenth = 0
-    if flag == 3:
-        lenth = 14
-    else:
-        lenth = 10
-    my_weight = [0.0] * lenth
-    for i in x:
-        my_weight[i[-1].item()] += 1
-    for i in range(lenth):
-        if my_weight[i] > 0:
-            my_weight[i] = train_data_size / my_weight[i]
-        else:
-            my_weight[i] = train_data_size
-    weights = torch.tensor(my_weight, dtype=torch.float32) * 0.1
-    loss_fn = nn.CrossEntropyLoss(weight=weights).to(device)
+    # # 定义损失函数的权重
+    # lenth = 0
+    # if flag == 3:
+    #     lenth = 14
+    # else:
+    #     lenth = 10
+    # my_weight = [0.0] * lenth
+    # for i in x:
+    #     my_weight[i[-1].item()] += 1
+    # for i in range(lenth):
+    #     if my_weight[i] > 0:
+    #         my_weight[i] = train_data_size / my_weight[i]
+    #     else:
+    #         my_weight[i] = train_data_size
+    # weights = torch.tensor(my_weight, dtype=torch.float32) * 0.1
+    # loss_fn = nn.CrossEntropyLoss(weight=weights).to(device)
+
+    loss_fn = nn.CrossEntropyLoss().to(device)
 
     for i in range(epoch):
         print("------第{}轮训练开始------".format(i + 1))
-
 
         # 训练步骤
         model.train()
@@ -70,21 +68,13 @@ def tot_train(model, optimizer, writer, epoch, x, y, flag):
             target = target.to(device)
             outputs = model(feature)
 
-            probs = torch.softmax(outputs, dim=1)
-            centers = torch.sum(probs * torch.arange(10).to(device), dim=1)
-            # centers = torch.zeros(batch_size).to(device)
-            # for i in range(batch_size):
-            #     probs_i = probs[i]
-            #     total_weight = torch.sum(probs_i)
-            #     weight_sum = torch.sum(probs_i * torch.arange(10).to(device))
-            #     centers[i] = weight_sum / total_weight
-            # print(centers)
-            distances = torch.pow(centers - target, 2)
-            dis_factor = 0.1
+            # probs = torch.softmax(outputs, dim=1)
+            # centers = torch.sum(probs * torch.arange(10).to(device), dim=1)
+            # distances = torch.pow(centers - target, 2)
+            # dis_factor = 0.1
+            # loss = loss_fn(outputs, target) + torch.sum(distances) * dis_factor
 
-            loss = loss_fn(outputs, target) + torch.sum(distances) * dis_factor
-
-
+            loss = loss_fn(outputs, target)
 
             total_train_loss = total_train_loss + loss.item()
             accuracy = (outputs.argmax(1) == target).sum()
@@ -112,11 +102,15 @@ def tot_train(model, optimizer, writer, epoch, x, y, flag):
                 feature = feature.to(device)
                 target = target.to(device)
                 outputs = model(feature)
-                probs = torch.softmax(outputs, dim=1)
-                centers = torch.sum(probs * torch.arange(10).to(device), dim=1)
-                distances = torch.pow(centers - target, 2)
-                dis_factor = 0.1
-                loss = loss_fn(outputs, target) + torch.sum(distances) * dis_factor
+
+                # probs = torch.softmax(outputs, dim=1)
+                # centers = torch.sum(probs * torch.arange(10).to(device), dim=1)
+                # distances = torch.pow(centers - target, 2)
+                # dis_factor = 0.1
+                # loss = loss_fn(outputs, target) + torch.sum(distances) * dis_factor
+
+                loss = loss_fn(outputs, target)
+
                 total_test_loss = total_test_loss + loss.item()
                 accuracy = (outputs.argmax(1) == target).sum()
                 total_accuracy = total_accuracy + accuracy
@@ -136,6 +130,7 @@ def train1():
     print("------对后1天的结果预测模型训练开始------")
     # 定义需要的参数, 包括数据, 模型, 优化器, 迭代次数等
     epoch = 100
+    learning_rate = 1e-3
     train_data, test_data = construct_data.construct()
     train_data = change_data(train_data)
     test_data = change_data(test_data)
@@ -152,7 +147,8 @@ def train2():
     print("------对后3天的结果预测模型训练开始------")
     # 定义需要的参数, 包括数据, 模型, 优化器, 迭代次数等
     epoch = 100
-    train_data, test_data = construct_data.construct2()
+    learning_rate = 1e-3
+    train_data, test_data = construct_data.construct_two()
     train_data = change_data(train_data)
     test_data = change_data(test_data)
     model = ClsModel2().to(device)
@@ -167,10 +163,11 @@ def train3():
     print("------对后5天的结果预测模型训练开始------")
     # 定义需要的参数, 包括数据, 模型, 优化器, 迭代次数等
     epoch = 100
+    learning_rate = 1e-3
     train_data, test_data = construct_data.construct3()
     train_data = change_data(train_data)
     test_data = change_data(test_data)
-    model = ClsModel2().to(device)
+    model = ClsModel3().to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
     tot_train(model, optimizer, writer, epoch, train_data, test_data, 3)
 
@@ -178,5 +175,5 @@ def train3():
 
 
 # train1()
-# train2()
+train2()
 # train3()

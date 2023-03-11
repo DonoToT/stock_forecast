@@ -1,5 +1,8 @@
 import csv
+
+import numpy
 import numpy as np
+import torch
 
 
 def map_range1(x):
@@ -137,6 +140,43 @@ def construct():
     return train_data, test_data
 
 
+def map_range_two(x):
+    if x > 0:
+        return 1
+    else:
+        return 0
+
+
+def construct_two():
+    test_size = int((rows - 32) / 10) + 1
+    train_size = rows - 32 - test_size
+    train_data = np.empty((train_size, 61))
+    test_data = np.empty((test_size, 61))
+
+    hand_num = data_array[:, 2]
+    hand_num = np.sort(hand_num)
+
+    testi = 0
+    traini = 0
+    for i in range(rows - 32):
+        one_data = np.empty(61)
+        for j in range(30):
+            one_data[j] = data_array[i + j][2]
+            one_data[j + 30] = data_array[i + j][3]
+        one_data[60] = map_range_two((data_array[i + 32][0] - data_array[i + 29][1]) /
+                                  data_array[i + 29][1])
+        # print(one_data)
+        if i % 10 == 0:
+            test_data[testi] = one_data
+            testi += 1
+        else:
+            train_data[traini] = one_data
+            traini += 1
+
+    return train_data, test_data
+
+
+
 def construct2():
     test_size = int((rows - 32) / 10) + 1
     train_size = rows - 32 - test_size
@@ -215,3 +255,6 @@ minn = min(data_array[:,2])
 # print(train_data, test_data)
 # testing = construct_test()
 # print(testing)
+
+# train_data, test_data = construct_two()
+# print(train_data, test_data)

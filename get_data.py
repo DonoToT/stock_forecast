@@ -8,7 +8,7 @@ print('login respond  error_msg:'+lg.error_msg)
 
 rs = bs.query_history_k_data_plus("sh.600000",
     "date,code,open,high,low,close,preclose,volume,amount,adjustflag,turn,tradestatus,pctChg,isST",
-    start_date='2022-03-09', end_date='2023-03-09',
+    start_date='1999-11-11', end_date='2022-03-09',
     frequency="d", adjustflag="3")
 print('query_history_k_data_plus respond error_code:'+rs.error_code)
 print('query_history_k_data_plus respond  error_msg:'+rs.error_msg)
@@ -20,7 +20,7 @@ while (rs.error_code == '0') & rs.next():
     data_list.append(rs.get_row_data())
 result = pd.DataFrame(data_list, columns=rs.fields)
 # 结果集输出到csv文件
-result.to_csv("./dataset/dataset_test.csv", index=False)
+result.to_csv("./dataset/dataset_train.csv", index=False)
 print(result)
 
 bs.logout()

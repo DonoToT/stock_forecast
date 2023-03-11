@@ -21,6 +21,20 @@ class ClsModel2(nn.Module):
         super().__init__()
         self.linear1 = nn.Linear(60, 128)
         self.linear2 = nn.Linear(128, 64)
+        self.linear3 = nn.Linear(64, 2)
+
+    def forward(self, x):
+        x = torch.sigmoid(self.linear1(x))
+        x = torch.sigmoid(self.linear2(x))
+        x = torch.sigmoid(self.linear3(x))
+        return x
+
+
+class ClsModel3(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.linear1 = nn.Linear(60, 128)
+        self.linear2 = nn.Linear(128, 64)
         self.linear3 = nn.Linear(64, 14)
         # self.leakyrelu = nn.LeakyReLU()
 
