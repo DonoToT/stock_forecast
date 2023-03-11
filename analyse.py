@@ -41,7 +41,7 @@ def eval1():
     model = torch.load("./models/stock_forecast1 (1).pth", map_location=torch.device('cuda'))
     model.eval()
 
-    lists = np.empty(test_data_size, dtype=np.int)
+    lists = np.empty(test_data_size, dtype=np.int64)
 
     for i in range(test_data_size):
         temp = torch.tensor(test_data[i,:-1]).to(torch.float32)
@@ -68,28 +68,33 @@ def analyse():
     tot_array, rows = get_numpy()
     lists = eval1()
 
-    stock_num = 10000
+    stock_num = 0
     hand_money = 0
 
-    nums = [-400, -200, -100, -60, -20, 10, 30, 50, 100, 200]
+    nums = [-200, -100, -50, -30, -10, 10, 30, 50, 100, 200]
     loc = ["小于-10%", "-10%到-5%", "-5%到-3%", "-3%到-1%", "-1%到0%", "0%到1%", "1%到3%", "3%到5%", "5%到10%"]
 
     for i in range(len(lists)):
-        if (lists[i] == -1):
+        if lists[i] == -1:
             continue
         num = nums[lists[i]]
-        if (num > 0):
-            hand_money -= num * tot_array[i + 29][0]
-            stock_num += num
-        else:
-            if stock_num <= abs(num):
-                hand_money += stock_num * tot_array[i + 29][0]
-                stock_num = 0
-            else:
-                hand_money -= num * tot_array[i + 29][0]
-                stock_num += num
-        tot_money = hand_money + stock_num * tot_array[i + 29][0] - 10000 * tot_array[i + 29][0]
+        hand_money -= num * tot_array[i + 29][0]
+        stock_num += num
+        # if num > 0:
+        #     hand_money -= num * tot_array[i + 29][0]
+        #     stock_num += num
+        # else:
+        #     hand_money += num * tot_array[i + 29][0]
+        #     stock_num += num
+            # if stock_num <= abs(num):
+            #     hand_money += stock_num * tot_array[i + 29][0]
+            #     stock_num = 0
+            # else:
+            #     hand_money -= num * tot_array[i + 29][0]
+            #     stock_num += num
+        tot_money = hand_money + stock_num * tot_array[i + 30][0]
         print("第{}天, 手头金钱:{}, 股票数:{}, 总金额:{}".format(i, hand_money, stock_num, tot_money))
-        print("预测位置为:{}, 实际涨跌幅为:{}%".format(loc[lists[i]], tot_array[i + 30][3]))
+        print("预测位置为:{}, 实际涨跌幅为:{}%, 当前股价为:{}".format(loc[lists[i]], tot_array[i + 30][3], tot_array[i + 30][0]))
+
 
 analyse()

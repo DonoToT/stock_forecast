@@ -35,10 +35,10 @@ import train
 # 0 -> 5
 
 def eval1():
-    # train_data, test_data = construct_data.construct()
-    test_data = construct_data.construct_test()
+    train_data, test_data = construct_data.construct()
+    # test_data = construct_data.construct_test()
     test_data_size = len(test_data)
-    model = torch.load("./models/stock_forecast1 (1).pth", map_location=torch.device('cuda'))
+    model = torch.load("./models/stock_forecast1 (0310_1938).pth", map_location=torch.device('cuda'))
     model.eval()
 
     seventy_cnt = 0
@@ -59,10 +59,15 @@ def eval1():
         tot_cnt = 0
 
         for j in output:
+            print("[{}]:{:.4}%".format(tot_cnt, j / sum * 100), end="\t")
+            tot_cnt += 1
+        print("")
+
+        for j in output:
             prob = j / sum * 100
-            if prob >= 70:
+            if prob >= 30:
                 seventy_cnt += 1
-                print("[{}]:{:.4}%".format(tot_cnt, j / sum * 100), end="\t")
+                # print("[{}]:{:.4}%".format(tot_cnt, j / sum * 100), end="\t")
                 if int(target + 0.1) == tot_cnt:
                     right += 1
                 elif abs(int(target + 0.1) - tot_cnt) == 1:
@@ -73,7 +78,7 @@ def eval1():
                     wrong += 1
 
             tot_cnt += 1
-        print("")
+        # print("")
     print("测试数据共有:{}个".format(test_data_size))
     print("预测概率最大值大于70%的共有:{}".format(seventy_cnt))
     print("其中预测区间正确的共有:{}".format(right))

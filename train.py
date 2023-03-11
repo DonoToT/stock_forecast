@@ -53,7 +53,7 @@ def tot_train(model, optimizer, writer, epoch, x, y, flag):
             my_weight[i] = train_data_size / my_weight[i]
         else:
             my_weight[i] = train_data_size
-    weights = torch.tensor(my_weight, dtype=torch.float32)
+    weights = torch.tensor(my_weight, dtype=torch.float32) * 0.1
     loss_fn = nn.CrossEntropyLoss(weight=weights).to(device)
 
     for i in range(epoch):
@@ -70,15 +70,14 @@ def tot_train(model, optimizer, writer, epoch, x, y, flag):
             target = target.to(device)
             outputs = model(feature)
 
-            batch_size = target.size(0)
-
             probs = torch.softmax(outputs, dim=1)
-            centers = torch.zeros(batch_size).to(device)
-            for i in range(batch_size):
-                probs_i = probs[i]
-                total_weight = torch.sum(probs_i)
-                weight_sum = torch.sum(probs_i * torch.arange(10).to(device))
-                centers[i] = weight_sum / total_weight
+            centers = torch.sum(probs * torch.arange(10).to(device), dim=1)
+            # centers = torch.zeros(batch_size).to(device)
+            # for i in range(batch_size):
+            #     probs_i = probs[i]
+            #     total_weight = torch.sum(probs_i)
+            #     weight_sum = torch.sum(probs_i * torch.arange(10).to(device))
+            #     centers[i] = weight_sum / total_weight
             # print(centers)
             distances = torch.pow(centers - target, 2)
             dis_factor = 0.1
@@ -113,7 +112,11 @@ def tot_train(model, optimizer, writer, epoch, x, y, flag):
                 feature = feature.to(device)
                 target = target.to(device)
                 outputs = model(feature)
-                loss = loss_fn(outputs, target)
+                probs = torch.softmax(outputs, dim=1)
+                centers = torch.sum(probs * torch.arange(10).to(device), dim=1)
+                distances = torch.pow(centers - target, 2)
+                dis_factor = 0.1
+                loss = loss_fn(outputs, target) + torch.sum(distances) * dis_factor
                 total_test_loss = total_test_loss + loss.item()
                 accuracy = (outputs.argmax(1) == target).sum()
                 total_accuracy = total_accuracy + accuracy
@@ -174,6 +177,6 @@ def train3():
     writer.close()
 
 
-train1()
+# train1()
 # train2()
 # train3()
