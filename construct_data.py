@@ -85,7 +85,7 @@ def normalizing(x):
 
 def get_numpy():
     # 打开csv文件并创建reader对象
-    with open('dataset/dataset_test.csv', newline='') as csvfile:
+    with open('dataset/dataset_train.csv', newline='') as csvfile:
         reader = csv.reader(csvfile, delimiter=',')
         next(reader)  # 去掉头标签
         lists = list(reader)  # 加载到二维列表中

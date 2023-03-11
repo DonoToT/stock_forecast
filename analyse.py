@@ -2,41 +2,12 @@ import csv
 
 import numpy as np
 import torch
+from matplotlib import pyplot as plt
 
 import construct_data
 
-
-def get_numpy():
-    # 打开csv文件并创建reader对象
-    with open('dataset/dataset_test.csv', newline='') as csvfile:
-        reader = csv.reader(csvfile, delimiter=',')
-        next(reader)  # 去掉头标签
-        lists = list(reader)  # 加载到二维列表中
-        csvfile.close()
-
-    str_array = np.array(lists)  # 转换为NumPy数组
-
-    # 数据清洗
-    i = 0
-    while i < len(str_array):
-        # print(lists[i][10])
-        if not str_array[i][10]:
-            str_array = np.delete(str_array, i, axis=0)
-        else:
-            i += 1
-
-    rows, cols = str_array.shape
-    float_array = np.zeros((rows, 4))
-    float_array[:, 0] = str_array[:, 5].astype(float)
-    float_array[:, 1] = str_array[:, 6].astype(float)
-    float_array[:, 2] = str_array[:, 10].astype(float)
-    float_array[:, 3] = str_array[:, 12].astype(float)
-
-    return float_array, rows
-
-
 def eval1():
-    test_data = construct_data.construct_test()
+    train_data, test_data = construct_data.construct()
     test_data_size = len(test_data)
     model = torch.load("./models/stock_forecast1 (1).pth", map_location=torch.device('cuda'))
     model.eval()
@@ -55,7 +26,7 @@ def eval1():
         flag = True
         for j in output:
             prob = j / sum * 100
-            if prob >= 70:
+            if prob >= 50:
                 flag = False
                 lists[i] = tot_cnt
             tot_cnt += 1
@@ -65,36 +36,73 @@ def eval1():
     return lists
 
 def analyse():
-    tot_array, rows = get_numpy()
+    tot_array, rows = construct_data.get_numpy()
+    test_size = int(rows / 10)
+    test_array = np.empty((test_size, 4))
     lists = eval1()
 
-    stock_num = 0
-    hand_money = 0
+    testi = 0
+    for i in range(30, rows):
+        if i % 10 == 0:
+            test_array[testi] = tot_array[i]
+            testi += 1
 
-    nums = [-200, -100, -50, -30, -10, 10, 30, 50, 100, 200]
+    tot_stock = 0
+    tot_money = 0
+    day_win = 0
+    day_los = 0
+    day_buy = 0
+    day_less = 0
+    day_unbuy = 0
+    x = []
+    y = []
+    z = []
+    # nums = [-200, -100, -50, -30, -10, 10, 30, 50, 100, 200]
     loc = ["小于-10%", "-10%到-5%", "-5%到-3%", "-3%到-1%", "-1%到0%", "0%到1%", "1%到3%", "3%到5%", "5%到10%"]
 
     for i in range(len(lists)):
+        print("第{}天".format(i))
         if lists[i] == -1:
+            day_less += 1
+            print("该天没有概率大于70%的区间")
             continue
-        num = nums[lists[i]]
-        hand_money -= num * tot_array[i + 29][0]
-        stock_num += num
-        # if num > 0:
-        #     hand_money -= num * tot_array[i + 29][0]
-        #     stock_num += num
-        # else:
-        #     hand_money += num * tot_array[i + 29][0]
-        #     stock_num += num
-            # if stock_num <= abs(num):
-            #     hand_money += stock_num * tot_array[i + 29][0]
-            #     stock_num = 0
-            # else:
-            #     hand_money -= num * tot_array[i + 29][0]
-            #     stock_num += num
-        tot_money = hand_money + stock_num * tot_array[i + 30][0]
-        print("第{}天, 手头金钱:{}, 股票数:{}, 总金额:{}".format(i, hand_money, stock_num, tot_money))
-        print("预测位置为:{}, 实际涨跌幅为:{}%, 当前股价为:{}".format(loc[lists[i]], tot_array[i + 30][3], tot_array[i + 30][0]))
+        elif lists[i] <= 4:
+            day_unbuy += 1
+            print("预测位置为:{}, 实际涨跌幅为:{}, 不进行操作, 总体盈亏:{}".format(loc[lists[i]], test_array[i][3], tot_stock))
+        else:
+            daily_money = test_array[i][0] - test_array[i][1]   # 今日收盘价 - 昨日收盘价 = 今日盈亏额
+            tot_stock += daily_money        # 把每日盈亏额累加
+            print("预测位置为:{}, 实际涨跌幅为:{}, 当日盈亏:{}, 总体盈亏:{}".format(loc[lists[i]], test_array[i][3], daily_money, tot_stock))
+            day_buy += 1
+            if daily_money >= 0:
+                day_win += 1
+            else:
+                day_los += 1
+            day_stock = 100.0 / test_array[i][1]
+            tot_money += day_stock * test_array[i][0] - day_stock * test_array[i][1]
+            print("当日盈亏:{}, 总体盈亏:{}".format(day_stock * test_array[i][0] - day_stock * test_array[i][1], tot_money))
+        x.append(i)
+        # z.append(day_stock * test_array[i][0] - day_stock * test_array[i][1])
+        y.append(tot_money)
+    print(day_buy, day_win, day_los, day_less, day_unbuy)
+
+    # 绘制曲线图
+    plt.plot(x, y)
+
+    # 添加标题和标签
+    plt.title('概率60总计盈亏')
+    plt.xlabel('Time')
+    plt.ylabel('tot_money')
+
+    # 显示图像
+    plt.show()
 
 
+    # plt.plot(x, z)
+    # plt.title('概率60每日盈亏')
+    # plt.xlabel('Time')
+    # plt.ylabel('daily_money')
+    #
+    # # 显示图像
+    # plt.show()
 analyse()
