@@ -89,24 +89,39 @@ def eval1():
 
 
 def eval2():
-    train_data, test_data = construct_data.construct2()
-    model = torch.load("stock_forecast2.pth", map_location=torch.device('cpu'))
+    test_data = construct_data.construct_two(False)
+    test_data_size = len(test_data)
+    model = torch.load("./models/stock_forecast_2(0311_1846).pth", map_location=torch.device('cuda'))
     model.eval()
-    output = model(torch.tensor(test_data[1, :60]).to(torch.float32))
-    output = output.detach().numpy()
-    sum = output.sum()
 
-    print("***************************")
-    print("未来3天涨跌率低于-30%的概率为: {:.4}%".format(output[0] / sum * 100))
-    print("未来3天涨跌率在-30%到-20%的概率为: {:.4}%".format(output[1] / sum * 100))
-    print("未来3天涨跌率在-20%到-10%的概率为: {:.4}%".format(output[2] / sum * 100))
-    print("未来3天涨跌率在-10%到-5%的概率为: {:.4}%".format(output[3] / sum * 100))
-    print("未来3天涨跌率在-5%到0%的概率为: {:.4}%".format(output[4] / sum * 100))
-    print("未来3天涨跌率在0%到5%的概率为: {:.4}%".format(output[5] / sum * 100))
-    print("未来3天涨跌率在5%到10%的概率为: {:.4}%".format(output[6] / sum * 100))
-    print("未来3天涨跌率在10%到20%的概率为: {:.4}%".format(output[7] / sum * 100))
-    print("未来3天涨跌率在20%到30%的概率为: {:.4}%".format(output[8] / sum * 100))
-    print("未来3天涨跌率高于30%的概率为: {:.4}%".format(output[9] / sum * 100))
+    seventy_cnt = 0
+    right = 0
+
+    for i in range(test_data_size):
+        temp = torch.tensor(test_data[i, :-1]).to(torch.float32)
+        target = test_data[i, -1]
+        output = model(temp.to('cuda'))
+        output = output.cpu()
+        output = output.detach().numpy()
+        sum = output.sum()
+
+        print("第{}行数据目标为{}, 预测概率为: ".format(i, target), end="")
+        tot_cnt = 0
+
+        for j in output:
+            print("[{}]:{:.4}%".format(tot_cnt, j / sum * 100), end="\t")
+            if j / sum * 100 >= 70:
+                seventy_cnt += 1
+                if abs(tot_cnt - target) < 1e-4:
+                    right += 1
+            tot_cnt += 1
+        print("")
+
+    print(seventy_cnt, right)
+
+
+
+
 
 
 def eval3():
@@ -134,6 +149,6 @@ def eval3():
     print("未来5天涨跌率高于50%的概率为: {:.4}%".format(output[13] / sum * 100))
 
 
-eval1()
-# eval2()
+# eval1()
+eval2()
 # eval3()
