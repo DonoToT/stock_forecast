@@ -28,7 +28,7 @@ def change_data(x):
     return x
 
 
-def get_loss_weight(dataset, weight=1):
+def get_loss_weight(dataset, weight=0.1):
     lenth = 10
     my_weight = [0.0] * lenth
     for i in dataset:
@@ -50,10 +50,11 @@ def tot_train(model, optimizer, writer, epoch, x, y, days):
     total_test_step = 0
 
     # 定义损失函数的权重
-    train_weights = get_loss_weight(x, 1)
-    test_weights = get_loss_weight(y, 1)
+    train_weights = get_loss_weight(x, 0.05)
+    test_weights = get_loss_weight(y, 0.05)
     train_loss_fn = nn.CrossEntropyLoss(weight=train_weights).to(device)
     test_loss_fn = nn.CrossEntropyLoss(weight=test_weights).to(device)
+
 
     # loss_fn = nn.CrossEntropyLoss().to(device)
 
@@ -74,7 +75,7 @@ def tot_train(model, optimizer, writer, epoch, x, y, days):
             probs = torch.softmax(outputs, dim=1)
             centers = torch.sum(probs * torch.arange(10).to(device), dim=1)
             distances = torch.pow(centers - target, 2)
-            dis_factor = 0.01
+            dis_factor = 0.005
 
             loss = train_loss_fn(outputs, target) + torch.sum(distances) * dis_factor
             # loss = train_loss_fn(outputs, target)
@@ -111,7 +112,7 @@ def tot_train(model, optimizer, writer, epoch, x, y, days):
                 probs = torch.softmax(outputs, dim=1)
                 centers = torch.sum(probs * torch.arange(10).to(device), dim=1)
                 distances = torch.pow(centers - target, 2)
-                dis_factor = 0.01
+                dis_factor = 0.005
 
                 loss = test_loss_fn(outputs, target) + torch.sum(distances) * dis_factor
                 # loss = test_loss_fn(outputs, target)
@@ -132,7 +133,74 @@ def tot_train(model, optimizer, writer, epoch, x, y, days):
             torch.save(model, "./models/stock_forecast_{}days.pth".format(days))
 
 
-def train(days=3, epoch=100, learning_rate=1e-2, choose_model=1):
+def tot_train2(model, optimizer, writer, epoch, x, y, days):
+    train_dataloader = DataLoader(x, batch_size=64, shuffle=True)
+    test_dataloader = DataLoader(y, batch_size=64, shuffle=True)
+    train_data_size = len(x)
+    test_data_size = len(y)
+    total_train_step = 0
+    total_test_step = 0
+
+    # 定义损失函数的权重
+    train_loss_fn = nn.MSELoss().to(device)
+    test_loss_fn = nn.MSELoss().to(device)
+
+    # loss_fn = nn.CrossEntropyLoss().to(device)
+
+    for i in range(epoch):
+        print("------第{}轮训练开始------".format(i + 1))
+
+        # 训练步骤
+        model.train()
+        total_train_loss = 0
+        for data in train_dataloader:
+            feature, target = data
+            feature = feature.to(device)
+            target = target.to(device)
+            outputs = model(feature)
+
+            loss = train_loss_fn(outputs, target)
+            total_train_loss = total_train_loss + loss.item() * feature.size(0)
+
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+
+            total_train_step += 1
+            if total_train_step % 100 == 0:
+                print("训练次数: {}, Loss: {}".format(total_train_step, loss.item()))
+                writer.add_scalar("train_loss", loss.item(), total_train_step)
+
+        rmse = torch.sqrt(total_train_loss / train_data_size)
+        print("整体训练集上的Loss: {}".format(total_train_loss))
+        print("整体训练集上的均方根误差: {}".format(rmse))
+
+        # 测试步骤
+        model.eval()
+        total_test_loss = 0
+        with torch.no_grad():
+            for data in test_dataloader:
+                feature, target = data
+                feature = feature.to(device)
+                target = target.to(device)
+                outputs = model(feature)
+
+                loss = test_loss_fn(outputs, target)
+                total_test_loss = total_test_loss + loss.item() * feature.size(0)
+
+        rmse = torch.sqrt(total_test_loss / test_data_size)
+        print("整体测试集上的Loss: {}".format(total_test_loss))
+        print("整体测试集上的均方根误差: {}".format(rmse))
+
+        writer.add_scalar("test_loss", total_test_loss, total_test_step)
+        writer.add_scalar("test_rmse", rmse, total_test_step)
+
+        total_test_step += 1
+        if i % 100 == 0:
+            torch.save(model, "./models/stock_forecast_{}days.pth".format(days))
+
+
+def train(days=3, epoch=100, learning_rate=1e-2, choose_model=1, type=True):
     writer = SummaryWriter("./logs_train_{}".format(days))
     print("------对后{}天的结果预测模型训练开始------".format(days))
 
@@ -140,67 +208,25 @@ def train(days=3, epoch=100, learning_rate=1e-2, choose_model=1):
     train_data = change_data(train_data)
     test_data = change_data(test_data)
     global model
+    if choose_model == 0:
+        model = torch.load("./models/stock_forecast_{}days.pth".format(days), map_location=torch.device('cuda'))
     if choose_model == 1:
         model = ClsModel().to(device)
     elif choose_model == 2:
         model = ClsModel2().to(device)
-    # model = torch.load("./models/stock_forecast1.pth", map_location=torch.device('cuda'))
+    elif choose_model == 3:
+        model = ClsModel3().to(device)
+
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
-    tot_train(model, optimizer, writer, epoch, train_data, test_data, days)
+    if type:
+        tot_train(model, optimizer, writer, epoch, train_data, test_data, days)
+    else:
+        tot_train2(model, optimizer, writer, epoch, train_data, test_data, days)
 
     writer.close()
 
-#
-# def train1():
-#     writer = SummaryWriter("./logs_train")
-#     print("------对后1天的结果预测模型训练开始------")
-#     # 定义需要的参数, 包括数据, 模型, 优化器, 迭代次数等
-#     # epoch = 100
-#     # learning_rate = 1e-2
-#     train_data, test_data = construct_data.construct()
-#     train_data = change_data(train_data)
-#     test_data = change_data(test_data)
-#     model = ClsModel().to(device)
-#     # model = torch.load("./models/stock_forecast1.pth", map_location=torch.device('cuda'))
-#     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
-#     tot_train(model, optimizer, writer, epoch, train_data, test_data, 1)
-#
-#     writer.close()
-#
-#
-# def train2():
-#     writer = SummaryWriter("./logs_train2")
-#     print("------对后3天的结果预测模型训练开始------")
-#     # 定义需要的参数, 包括数据, 模型, 优化器, 迭代次数等
-#     epoch = 100
-#     learning_rate = 1e-3
-#     train_data, test_data = construct_data.construct_two()
-#     train_data = change_data(train_data)
-#     test_data = change_data(test_data)
-#     model = ClsModel2().to(device)
-#     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
-#     tot_train(model, optimizer, writer, epoch, train_data, test_data, 2)
-#
-#     writer.close()
-#
-#
-# def train3():
-#     writer = SummaryWriter("./logs_train3")
-#     print("------对后5天的结果预测模型训练开始------")
-#     # 定义需要的参数, 包括数据, 模型, 优化器, 迭代次数等
-#     epoch = 100
-#     learning_rate = 1e-3
-#     train_data, test_data = construct_data.construct3()
-#     train_data = change_data(train_data)
-#     test_data = change_data(test_data)
-#     model = ClsModel3().to(device)
-#     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
-#     tot_train(model, optimizer, writer, epoch, train_data, test_data, 3)
-#
-#     writer.close()
 
-
-train(days=3, epoch=100, learning_rate=1e-2, choose_model=2)
+train(days=3, epoch=1000, learning_rate=1e-2, choose_model=2, type=True)
 # train1()
 # train2()
 # train3()

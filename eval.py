@@ -34,11 +34,11 @@ import construct_data
 # 204 -> 0
 # 0 -> 5
 
-def eval(mode="test", days=1, probability=70):
-    test_data = construct_data.construct(mode, days=3)
+def eval(mode="test", days=3, probability=70):
+    test_data = construct_data.construct(mode, days=days)
     # test_data = construct_data.construct_test()
     test_data_size = len(test_data)
-    model = torch.load("./models/stock_forecast_3days(0312_1117).pth", map_location=torch.device('cuda'))
+    model = torch.load("./models/stock_forecast_3days(5213m2w05p1d005).pth", map_location=torch.device('cuda'))
     model.eval()
 
     lists = np.empty(test_data_size, dtype=np.int64)
@@ -52,7 +52,10 @@ def eval(mode="test", days=1, probability=70):
     for i in range(test_data_size):
         temp = torch.tensor(test_data[i, :-1]).to(torch.float32)
         target = test_data[i, -1]
-        output = model(temp.to('cuda'))
+        # print(temp)
+        temp = temp.unsqueeze(0)
+        # print(temp)
+        output = model(temp.to('cuda')).squeeze(0)
         output = output.cpu()
         output = output.detach().numpy()
         sum = output.sum()
@@ -60,6 +63,7 @@ def eval(mode="test", days=1, probability=70):
         print("第{}行数据目标为{}, 预测概率为: ".format(i, target), end="")
         tot_cnt = 0
 
+        # 对外传参
         flag = True
         for j in output:
             prob = j / sum * 100
@@ -76,70 +80,13 @@ def eval(mode="test", days=1, probability=70):
         #     tot_cnt += 1
         # print("")
 
-    #        分析数据
-    #     for j in output:
-    #         prob = j / sum * 100
-    #         if prob >= probability:
-    #             seventy_cnt += 1
-    #             print("[{}]:{:.4}%".format(tot_cnt, j / sum * 100), end="\t")
-    #             if int(target + 0.1) == tot_cnt:
-    #                 right += 1
-    #             elif abs(int(target + 0.1) - tot_cnt) == 1:
-    #                 near1 += 1
-    #             elif abs(int(target + 0.1) - tot_cnt) == 2:
-    #                 near2 += 1
-    #             else:
-    #                 wrong += 1
-    #
-    #         tot_cnt += 1
-    #     print("")
-    # print("测试数据共有:{}个".format(test_data_size))
-    # print("预测概率最大值大于60%的共有:{}".format(seventy_cnt))
-    # print("其中预测区间正确的共有:{}".format(right))
-    # print("预测预测区间与实际区间距离为1的共有:{}".format(near1))
-    # print("预测预测区间与实际区间距离为2的共有:{}".format(near2))
-    # print("其他(错误)的共有:{}".format(wrong))
-    # print(seventy_cnt, right, near1, near2, wrong)
-
-    return lists
-
-
-
-
-def eval1():
-    train_data, test_data = construct_data.construct()
-    # test_data = construct_data.construct_test()
-    test_data_size = len(test_data)
-    model = torch.load("./models/stock_forecast1 (0310_1938).pth", map_location=torch.device('cuda'))
-    model.eval()
-
-    seventy_cnt = 0
-    right = 0
-    near1 = 0
-    near2 = 0
-    wrong = 0
-
-    for i in range(test_data_size):
-        temp = torch.tensor(test_data[i,:-1]).to(torch.float32)
-        target = test_data[i, -1]
-        output = model(temp.to('cuda'))
-        output = output.cpu()
-        output = output.detach().numpy()
-        sum = output.sum()
-
-        print("第{}行数据目标为{}, 预测概率为: ".format(i, target), end="")
+        #    分析数据
         tot_cnt = 0
-
-        for j in output:
-            print("[{}]:{:.4}%".format(tot_cnt, j / sum * 100), end="\t")
-            tot_cnt += 1
-        print("")
-
         for j in output:
             prob = j / sum * 100
-            if prob >= 30:
+            if prob >= probability:
                 seventy_cnt += 1
-                # print("[{}]:{:.4}%".format(tot_cnt, j / sum * 100), end="\t")
+                print("[{}]:{:.4}%".format(tot_cnt, j / sum * 100), end="\t")
                 if int(target + 0.1) == tot_cnt:
                     right += 1
                 elif abs(int(target + 0.1) - tot_cnt) == 1:
@@ -150,78 +97,16 @@ def eval1():
                     wrong += 1
 
             tot_cnt += 1
-        # print("")
+        print("")
     print("测试数据共有:{}个".format(test_data_size))
-    print("预测概率最大值大于70%的共有:{}".format(seventy_cnt))
+    print("预测概率最大值大于60%的共有:{}".format(seventy_cnt))
     print("其中预测区间正确的共有:{}".format(right))
     print("预测预测区间与实际区间距离为1的共有:{}".format(near1))
     print("预测预测区间与实际区间距离为2的共有:{}".format(near2))
     print("其他(错误)的共有:{}".format(wrong))
     print(seventy_cnt, right, near1, near2, wrong)
 
-
-def eval2():
-    test_data = construct_data.construct_two(False)
-    test_data_size = len(test_data)
-    model = torch.load("./models/stock_forecast_2(0311_1846).pth", map_location=torch.device('cuda'))
-    model.eval()
-
-    seventy_cnt = 0
-    right = 0
-
-    for i in range(test_data_size):
-        temp = torch.tensor(test_data[i, :-1]).to(torch.float32)
-        target = test_data[i, -1]
-        output = model(temp.to('cuda'))
-        output = output.cpu()
-        output = output.detach().numpy()
-        sum = output.sum()
-
-        print("第{}行数据目标为{}, 预测概率为: ".format(i, target), end="")
-        tot_cnt = 0
-
-        for j in output:
-            print("[{}]:{:.4}%".format(tot_cnt, j / sum * 100), end="\t")
-            if j / sum * 100 >= 70:
-                seventy_cnt += 1
-                if abs(tot_cnt - target) < 1e-4:
-                    right += 1
-            tot_cnt += 1
-        print("")
-
-    print(seventy_cnt, right)
+    return lists
 
 
-
-
-
-
-def eval3():
-    train_data, test_data = construct_data.construct3()
-    model = torch.load("stock_forecast3.pth", map_location=torch.device('cpu'))
-    model.eval()
-    output = model(torch.tensor(test_data[1, :60]).to(torch.float32))
-    output = output.detach().numpy()
-    sum = output.sum()
-
-    print("***************************")
-    print("未来5天涨跌率低于-50%的概率为: {:.4}%".format(output[0] / sum * 100))
-    print("未来5天涨跌率在-50%到-30%的概率为: {:.4}%".format(output[1] / sum * 100))
-    print("未来5天涨跌率在-30%到-20%的概率为: {:.4}%".format(output[2] / sum * 100))
-    print("未来5天涨跌率在-20%到-10%的概率为: {:.4}%".format(output[3] / sum * 100))
-    print("未来5天涨跌率在-10%到-5%的概率为: {:.4}%".format(output[4] / sum * 100))
-    print("未来5天涨跌率在-5%到-3%的概率为: {:.4}%".format(output[5] / sum * 100))
-    print("未来5天涨跌率在-3%到0%的概率为: {:.4}%".format(output[6] / sum * 100))
-    print("未来5天涨跌率在0%到3%的概率为: {:.4}%".format(output[7] / sum * 100))
-    print("未来5天涨跌率在3%到5%的概率为: {:.4}%".format(output[8] / sum * 100))
-    print("未来5天涨跌率在5%到10%的概率为: {:.4}%".format(output[9] / sum * 100))
-    print("未来5天涨跌率在10%到20%的概率为: {:.4}%".format(output[10] / sum * 100))
-    print("未来5天涨跌率在20%到30%的概率为: {:.4}%".format(output[11] / sum * 100))
-    print("未来5天涨跌率在30%到50%的概率为: {:.4}%".format(output[12] / sum * 100))
-    print("未来5天涨跌率高于50%的概率为: {:.4}%".format(output[13] / sum * 100))
-
-
-# eval()
-# eval1()
-# eval2()
-# eval3()
+eval()

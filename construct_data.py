@@ -139,7 +139,7 @@ def get_numpy(mode="train"):
     return float_array, rows
 
 
-def construct(mode="train", days=3):
+def construct(mode="train", days=3, type=True):
     data_array, rows = get_numpy(mode)
     test_size = int((rows - (days + 29)) / 10) + 1
     train_size = rows - (days + 29) - test_size
@@ -154,8 +154,11 @@ def construct(mode="train", days=3):
         for j in range(30):
             one_data[j] = data_array[i + j][2]
             one_data[j + 30] = data_array[i + j][3]
-        one_data[60] = map_range((data_array[i + days + 29][0] - data_array[i + 29][0]) /
-                                 data_array[i + 29][0] * 100)
+        if type:
+            one_data[60] = map_range((data_array[i + days + 29][0] - data_array[i + 29][0]) /
+                                     data_array[i + 29][0] * 100)
+        else:
+            one_data[60] = (data_array[i + days + 29][0] - data_array[i + 29][0]) / data_array[i + 29][0] * 100
         # print(one_data)
         if mode == "train":
             if i % 10 == 0:
