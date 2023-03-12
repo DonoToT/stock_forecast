@@ -40,6 +40,7 @@ def get_loss_weight(dataset, weight=1):
             my_weight[i] = len(dataset)
     return torch.tensor(my_weight, dtype=torch.float32) * weight
 
+
 def tot_train(model, optimizer, writer, epoch, x, y, days):
     train_dataloader = DataLoader(x, batch_size=64, shuffle=True)
     test_dataloader = DataLoader(y, batch_size=64, shuffle=True)
@@ -131,14 +132,18 @@ def tot_train(model, optimizer, writer, epoch, x, y, days):
             torch.save(model, "./models/stock_forecast_{}days.pth".format(days))
 
 
-def train(days=3, epoch=100, learning_rate=1e-2):
+def train(days=3, epoch=100, learning_rate=1e-2, choose_model=1):
     writer = SummaryWriter("./logs_train_{}".format(days))
     print("------对后{}天的结果预测模型训练开始------".format(days))
 
     train_data, test_data = construct_data.construct("train", days)
     train_data = change_data(train_data)
     test_data = change_data(test_data)
-    model = ClsModel().to(device)
+    global model
+    if choose_model == 1:
+        model = ClsModel().to(device)
+    elif choose_model == 2:
+        model = ClsModel2().to(device)
     # model = torch.load("./models/stock_forecast1.pth", map_location=torch.device('cuda'))
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
     tot_train(model, optimizer, writer, epoch, train_data, test_data, days)
@@ -195,7 +200,7 @@ def train(days=3, epoch=100, learning_rate=1e-2):
 #     writer.close()
 
 
-train(3, 100, 1e-2)
+train(days=3, epoch=100, learning_rate=1e-2, choose_model=2)
 # train1()
 # train2()
 # train3()

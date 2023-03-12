@@ -5,6 +5,7 @@ import torch
 from matplotlib import pyplot as plt
 
 import construct_data
+import eval
 
 
 def chg(now, last):
@@ -71,62 +72,52 @@ def eval2():
     return lists
 
 
-def analyse():
-    tot_array, rows = construct_data.get_numpy()
-    test_size = int(rows / 10)
-    test_array = np.empty((test_size, 4))
-    lists = eval1()
+def analyse(mode="test", days=3, probablity=50):
+    tot_array, rows = construct_data.get_numpy("test")
+    lists = eval.eval(mode, days)
 
-    testi = 0
-    for i in range(30, rows):
-        if i % 10 == 0:
-            test_array[testi] = tot_array[i]
-            testi += 1
-
-    tot_stock = 0
-    tot_money = 0
-    day_win = 0
-    day_los = 0
-    day_buy = 0
     day_less = 0
     day_unbuy = 0
+    day_buy = 0
+    day_win = 0
+    day_los = 0
+    tot_money = 0
     x = []
     y = []
-    z = []
-    # nums = [-200, -100, -50, -30, -10, 10, 30, 50, 100, 200]
-    loc = ["小于-10%", "-10%到-5%", "-5%到-3%", "-3%到-1%", "-1%到0%", "0%到1%", "1%到3%", "3%到5%", "5%到10%"]
-
+    loc = ["低于-10%", "-10%~-5%", "-5%~-3%", "-3%~-1%", "-1%~0%", "0%~1%", "1%~3%", "3%~5%", "5%~10%", "高于10%"]
     for i in range(len(lists)):
-        print("第{}天".format(i))
+        print("第{}天".format(i + 1), end=' ')
+        now_chg = chg(tot_array[i + (29 + days)][0], tot_array[i + 29][0])
         if lists[i] == -1:
             day_less += 1
-            print("该天没有概率大于70%的区间")
+            print("该天没有概率大于{}的区间".format(probablity))
             continue
-        elif lists[i] <= 4:
+        elif lists[i] == 0:
             day_unbuy += 1
-            print("预测位置为:{}, 实际涨跌幅为:{}, 不进行操作, 总体盈亏:{}".format(loc[lists[i]], test_array[i][3], tot_stock))
+            print("预测位置为:{}, 实际涨跌幅为:{}, 不进行操作".format(loc[lists[i]], now_chg))
         else:
-            daily_money = test_array[i][0] - test_array[i][1]   # 今日收盘价 - 昨日收盘价 = 今日盈亏额
-            tot_stock += daily_money        # 把每日盈亏额累加
-            print("预测位置为:{}, 实际涨跌幅为:{}, 当日盈亏:{}, 总体盈亏:{}".format(loc[lists[i]], test_array[i][3], daily_money, tot_stock))
+            print(
+                "预测位置为:{}, 实际涨跌幅为:{}".format(loc[lists[i]], now_chg))
             day_buy += 1
-            if daily_money >= 0:
+            if now_chg >= 0:
                 day_win += 1
             else:
                 day_los += 1
-            day_stock = 100.0 / test_array[i][1]
-            tot_money += day_stock * test_array[i][0] - day_stock * test_array[i][1]
-            print("当日盈亏:{}, 总体盈亏:{}".format(day_stock * test_array[i][0] - day_stock * test_array[i][1], tot_money))
+            day_stock = 100.0 / tot_array[i + 29][0]
+            tot_money += day_stock * tot_array[i + (29 + days)][0] - day_stock * tot_array[i + 29][0]
+            print("当日盈亏:{}, 总体盈亏:{}".format(day_stock * tot_array[i + (29 + days)][0] - day_stock * tot_array[i + 29][0],
+                                            tot_money))
         x.append(i)
         # z.append(day_stock * test_array[i][0] - day_stock * test_array[i][1])
         y.append(tot_money)
+
     print(day_buy, day_win, day_los, day_less, day_unbuy)
 
     # 绘制曲线图
     plt.plot(x, y)
 
     # 添加标题和标签
-    plt.title('概率60总计盈亏')
+    plt.title('{}percent_statistic'.format(probablity))
     plt.xlabel('Time')
     plt.ylabel('tot_money')
 
@@ -186,5 +177,5 @@ def analyse2():
     # 显示图像
     plt.show()
 
-# analyse()
-analyse2()
+analyse(mode="test", days=3, probablity=50)
+# analyse2()

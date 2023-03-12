@@ -17,16 +17,20 @@ class ClsModel(nn.Module):
 
 
 class ClsModel2(nn.Module):
-    def __init__(self):
+    def __init__(self, p=0.5):
         super().__init__()
         self.linear1 = nn.Linear(60, 128)
+        self.dropout1 = nn.Dropout(p=p)
         self.linear2 = nn.Linear(128, 64)
+        self.dropout2 = nn.Dropout(p=p)
         self.linear3 = nn.Linear(64, 10)
 
     def forward(self, x):
         x = torch.sigmoid(self.linear1(x))
+        x = self.dropout1(x)
         x = torch.sigmoid(self.linear2(x))
-        x = torch.sigmoid(self.linear3(x))
+        x = self.dropout2(x)
+        x = torch.softmax(self.linear3(x), dim=1)
         return x
 
 
