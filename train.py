@@ -204,7 +204,7 @@ def train(days=3, epoch=100, learning_rate=1e-2, choose_model=1, type=True):
     writer = SummaryWriter("./logs_train_{}".format(days))
     print("------对后{}天的结果预测模型训练开始------".format(days))
 
-    train_data, test_data = construct_data.construct("train", days)
+    train_data, test_data = construct_data.construct("train", days, type)
     train_data = change_data(train_data)
     test_data = change_data(test_data)
     global model
@@ -226,7 +226,7 @@ def train(days=3, epoch=100, learning_rate=1e-2, choose_model=1, type=True):
     writer.close()
 
 
-train(days=3, epoch=1000, learning_rate=1e-2, choose_model=2, type=True)
+train(days=1, epoch=1000, learning_rate=1e-2, choose_model=2, type=True)
 # train1()
 # train2()
 # train3()

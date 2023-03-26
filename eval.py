@@ -38,7 +38,7 @@ def eval(mode="test", days=3, probability=70):
     test_data = construct_data.construct(mode, days=days)
     # test_data = construct_data.construct_test()
     test_data_size = len(test_data)
-    model = torch.load("./models/stock_forecast_3days(5213m2w05p1d005).pth", map_location=torch.device('cuda'))
+    model = torch.load("./models/stock_forecast_3days(6314m2w01d001p05).pth", map_location=torch.device('cuda'))
     model.eval()
 
     lists = np.empty(test_data_size, dtype=np.int64)
@@ -75,6 +75,7 @@ def eval(mode="test", days=3, probability=70):
             lists[i] = -1
 
         # 展开预估的所有概率
+        # tot_cnt = 0
         # for j in output:
         #     print("[{}]:{:.4}%".format(tot_cnt, j / sum * 100), end="\t")
         #     tot_cnt += 1
@@ -99,7 +100,7 @@ def eval(mode="test", days=3, probability=70):
             tot_cnt += 1
         print("")
     print("测试数据共有:{}个".format(test_data_size))
-    print("预测概率最大值大于60%的共有:{}".format(seventy_cnt))
+    print("预测概率最大值大于{}%的共有:{}".format(probability, seventy_cnt))
     print("其中预测区间正确的共有:{}".format(right))
     print("预测预测区间与实际区间距离为1的共有:{}".format(near1))
     print("预测预测区间与实际区间距离为2的共有:{}".format(near2))
