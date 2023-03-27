@@ -17,7 +17,7 @@ class ClsModel(nn.Module):
 
 
 class ClsModel2(nn.Module):
-    def __init__(self, p=0.05):
+    def __init__(self, p=0.1):
         super().__init__()
         self.linear1 = nn.Linear(60, 128)
         self.dropout1 = nn.Dropout(p=p)
@@ -27,6 +27,7 @@ class ClsModel2(nn.Module):
 
     def forward(self, x):
         x = self.relu(self.linear1(x))
+        x = self.dropout1(x)
         x = self.relu(self.linear2(x))
         x = self.linear3(x)
         return x
@@ -45,6 +46,21 @@ class ClsModel3(nn.Module):
         x = torch.sigmoid(self.linear1(x))
         x = torch.sigmoid(self.linear2(x))
         x = self.linear3(x)
+        return x
+
+
+class ClsModel4(nn.Module):
+    def __init__(self, p=0.1):
+        super().__init__()
+        self.linear1 = nn.Linear(30, 64)
+        self.relu = nn.LeakyReLU(0.1)
+        self.dropout = nn.Dropout(p=p)
+        self.linear2 = nn.Linear(64, 10)
+
+    def forward(self, x):
+        x = self.relu(self.linear1(x))
+        x = self.dropout(x)
+        x = self.linear2(x)
         return x
 
 #

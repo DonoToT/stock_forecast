@@ -64,28 +64,34 @@ days(1,3,5,...): 表示预测未来多少天
 type(True/False): True表示分类模型, False表示回归模型
 分类模型考虑将输出结果替换为向量
 """
-def construct(mode="train", days=3, type=True):
+def construct(mode="train", days=3, type=True, fw=30):
     data_array, rows = get_numpy()
-    test_size = int((rows - (days + 29)) / 7) + 1
-    validation_size = test_size
-    train_size = rows - (days + 29) - test_size - validation_size
+    validation_size = int((rows - (days + fw - 1)) / 7)
+    test_size = validation_size
+    if (rows - (days + fw - 1)) % 7 > 0:
+        validation_size += 1
+    if (rows - (days + fw - 1)) % 7 > 1:
+        test_size += 1
 
-    train_data = np.empty((train_size, 61))
-    validation_data = np.empty((validation_size, 61))
-    test_data = np.empty((test_size, 61))
+    train_size = rows - (days + fw - 1) - test_size - validation_size
+
+    train_data = np.empty((train_size, fw * 2 + 1))
+    validation_data = np.empty((validation_size, fw * 2 + 1))
+    test_data = np.empty((test_size, fw * 2 + 1))
     tri = 0
     vi = 0
     tei = 0
-    for i in range(rows - (days + 29)):
-        one_data = np.empty(61)
-        for j in range(30):
+    for i in range(rows - (days + fw - 1)):
+        one_data = np.empty(fw * 2 + 1)
+        for j in range(fw):
             one_data[j] = data_array[i + j][2]
-            one_data[j + 30] = data_array[i + j][3]
+            one_data[j + fw] = data_array[i + j][3]
         if type:
-            one_data[60] = map_range((data_array[i + days + 29][0] - data_array[i + 29][0]) /
-                                     data_array[i + 29][0] * 100)
+            one_data[fw * 2] = map_range((data_array[i + days + fw - 1][0] - data_array[i + fw - 1][0]) /
+                                     data_array[i + fw - 1][0] * 100)
         else:
-            one_data[60] = (data_array[i + days + 29][0] - data_array[i + 29][0]) / data_array[i + 29][0] * 100
+            one_data[fw * 2] = (data_array[i + days + fw - 1][0] - data_array[i + fw - 1][0]) / \
+                               data_array[i + fw - 1][0] * 100
         # print(one_data)
         if i % 7 == 1:
             test_data[tei] = one_data
@@ -103,8 +109,8 @@ def construct(mode="train", days=3, type=True):
         ))
         return train_data, validation_data
     else:
-        print("进入construct函数, 模式为: test, 共读取到 {} 行测试数据".format(len(train_data)))
+        print("进入construct函数, 模式为: test, 共读取到 {} 行测试数据".format(len(test_data)))
         return test_data
 
 
-construct("train", 1, True)
+# construct("train", 1, True, 15)

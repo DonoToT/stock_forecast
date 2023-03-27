@@ -14,8 +14,8 @@ class MyDataset(Dataset):
         self.data = data
 
     def __getitem__(self, index):
-        features = self.data[index, :60].to(torch.float32)
-        label = self.data[index, 60].to(torch.long)
+        features = self.data[index, :-1].to(torch.float32)
+        label = self.data[index, -1].to(torch.long)
         return features, label
 
     def __len__(self):
@@ -50,10 +50,10 @@ def tot_train(model, optimizer, writer, epoch, x, y, days):
     total_test_step = 0
 
     # 定义损失函数的权重
+    # 验证集数据不需要增大少样本的权重(大概)
     train_weights = get_loss_weight(x, 0.05)
-    test_weights = get_loss_weight(y, 0.05)
     train_loss_fn = nn.CrossEntropyLoss(weight=train_weights).to(device)
-    test_loss_fn = nn.CrossEntropyLoss(weight=test_weights).to(device)
+    test_loss_fn = nn.CrossEntropyLoss().to(device)
 
 
     # loss_fn = nn.CrossEntropyLoss().to(device)
@@ -75,7 +75,7 @@ def tot_train(model, optimizer, writer, epoch, x, y, days):
             probs = torch.softmax(outputs, dim=1)
             centers = torch.sum(probs * torch.arange(10).to(device), dim=1)
             distances = torch.pow(centers - target, 2)
-            dis_factor = 0.005
+            dis_factor = 0.01
 
             loss = train_loss_fn(outputs, target) + torch.sum(distances) * dis_factor
             # loss = train_loss_fn(outputs, target)
@@ -112,7 +112,7 @@ def tot_train(model, optimizer, writer, epoch, x, y, days):
                 probs = torch.softmax(outputs, dim=1)
                 centers = torch.sum(probs * torch.arange(10).to(device), dim=1)
                 distances = torch.pow(centers - target, 2)
-                dis_factor = 0.005
+                dis_factor = 0.01
 
                 loss = test_loss_fn(outputs, target) + torch.sum(distances) * dis_factor
                 # loss = test_loss_fn(outputs, target)
@@ -200,11 +200,11 @@ def tot_train2(model, optimizer, writer, epoch, x, y, days):
             torch.save(model, "./models/stock_forecast_{}days.pth".format(days))
 
 
-def train(days=3, epoch=100, learning_rate=1e-2, choose_model=1, type=True):
+def train(days=3, epoch=100, learning_rate=1e-2, choose_model=1, type=True, fw=30):
     writer = SummaryWriter("./logs_train_{}".format(days))
     print("------对后{}天的结果预测模型训练开始------".format(days))
 
-    train_data, test_data = construct_data.construct("train", days, type)
+    train_data, test_data = construct_data.construct("train", days, type, fw)
     train_data = change_data(train_data)
     test_data = change_data(test_data)
     global model
@@ -216,6 +216,8 @@ def train(days=3, epoch=100, learning_rate=1e-2, choose_model=1, type=True):
         model = ClsModel2().to(device)
     elif choose_model == 3:
         model = ClsModel3().to(device)
+    elif choose_model == 4:
+        model = ClsModel4().to(device)
 
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
     if type:
@@ -226,7 +228,7 @@ def train(days=3, epoch=100, learning_rate=1e-2, choose_model=1, type=True):
     writer.close()
 
 
-train(days=1, epoch=1000, learning_rate=1e-2, choose_model=2, type=True)
+train(days=1, epoch=3000, learning_rate=1e-2, choose_model=4, type=True, fw=15)
 # train1()
 # train2()
 # train3()
