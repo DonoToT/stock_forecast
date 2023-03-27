@@ -28,23 +28,25 @@ def map_range(x):
         return 9
 
 
-def get_numpy():
+def get_numpy(index):
     # 打开csv文件并创建reader对象
-    with open('dataset/dataset_total.csv', newline='') as csvfile:
+    totlist = list()
+    with open('dataset/dataset_total{}.csv'.format(index), newline='') as csvfile:
         reader = csv.reader(csvfile, delimiter=',')
         next(reader)  # 去掉头标签
         lists = list(reader)  # 加载到二维列表中
+        totlist.extend(lists)
         csvfile.close()
-
-    str_array = np.array(lists)  # 转换为NumPy数组
 
     # 数据清洗
     i = 0
-    while i < len(str_array):
-        if not str_array[i][10]:
-            str_array = np.delete(str_array, i, axis=0)
+    while i < len(totlist):
+        if not totlist[i][10]:
+            del totlist[i]
         else:
             i += 1
+
+    str_array = np.array(totlist)  # 转换为NumPy数组
 
     rows, cols = str_array.shape
     float_array = np.zeros((rows, 4))
@@ -53,7 +55,7 @@ def get_numpy():
     float_array[:, 2] = str_array[:, 10].astype(float)
     float_array[:, 3] = str_array[:, 12].astype(float)
 
-    print("进入get_numpy函数, 共输出{}行数据".format(rows))
+    print("进入get_numpy函数, dataset_total{}读取完毕, 共输出{}行数据".format(index, rows))
 
     return float_array, rows
 
@@ -65,52 +67,61 @@ type(True/False): True表示分类模型, False表示回归模型
 分类模型考虑将输出结果替换为向量
 """
 def construct(mode="train", days=3, type=True, fw=30):
-    data_array, rows = get_numpy()
-    validation_size = int((rows - (days + fw - 1)) / 7)
-    test_size = validation_size
-    if (rows - (days + fw - 1)) % 7 > 0:
-        validation_size += 1
-    if (rows - (days + fw - 1)) % 7 > 1:
-        test_size += 1
+    final_train_data = np.empty((0, fw * 2 + 1))
+    final_validation_data = np.empty((0, fw * 2 + 1))
+    final_test_data = np.empty((0, fw * 2 + 1))
+    for i in range(10):
+        data_array, rows = get_numpy(i)
+        validation_size = int((rows - (days + fw - 1)) / 7)
+        test_size = validation_size
+        if (rows - (days + fw - 1)) % 7 > 0:
+            validation_size += 1
+        if (rows - (days + fw - 1)) % 7 > 1:
+            test_size += 1
 
-    train_size = rows - (days + fw - 1) - test_size - validation_size
+        train_size = rows - (days + fw - 1) - test_size - validation_size
 
-    train_data = np.empty((train_size, fw * 2 + 1))
-    validation_data = np.empty((validation_size, fw * 2 + 1))
-    test_data = np.empty((test_size, fw * 2 + 1))
-    tri = 0
-    vi = 0
-    tei = 0
-    for i in range(rows - (days + fw - 1)):
-        one_data = np.empty(fw * 2 + 1)
-        for j in range(fw):
-            one_data[j] = data_array[i + j][2]
-            one_data[j + fw] = data_array[i + j][3]
-        if type:
-            one_data[fw * 2] = map_range((data_array[i + days + fw - 1][0] - data_array[i + fw - 1][0]) /
-                                     data_array[i + fw - 1][0] * 100)
-        else:
-            one_data[fw * 2] = (data_array[i + days + fw - 1][0] - data_array[i + fw - 1][0]) / \
-                               data_array[i + fw - 1][0] * 100
-        # print(one_data)
-        if i % 7 == 1:
-            test_data[tei] = one_data
-            tei += 1
-        elif i % 7 == 0:
-            validation_data[vi] = one_data
-            vi += 1
-        else:
-            train_data[tri] = one_data
-            tri += 1
+        train_data = np.empty((train_size, fw * 2 + 1))
+        validation_data = np.empty((validation_size, fw * 2 + 1))
+        test_data = np.empty((test_size, fw * 2 + 1))
+        tri = 0
+        vi = 0
+        tei = 0
+        for i in range(rows - (days + fw - 1)):
+            one_data = np.empty(fw * 2 + 1)
+            for j in range(fw):
+                one_data[j] = data_array[i + j][2]
+                one_data[j + fw] = data_array[i + j][3]
+            if type:
+                one_data[fw * 2] = map_range((data_array[i + days + fw - 1][0] - data_array[i + fw - 1][0]) /
+                                         data_array[i + fw - 1][0] * 100)
+            else:
+                one_data[fw * 2] = (data_array[i + days + fw - 1][0] - data_array[i + fw - 1][0]) / \
+                                   data_array[i + fw - 1][0] * 100
+            # print(one_data)
+            if i % 7 == 1:
+                test_data[tei] = one_data
+                tei += 1
+            elif i % 7 == 0:
+                validation_data[vi] = one_data
+                vi += 1
+            else:
+                train_data[tri] = one_data
+                tri += 1
+
+        final_train_data = np.vstack((final_train_data, train_data))
+        final_test_data = np.vstack((final_test_data, test_data))
+        final_validation_data = np.vstack((final_validation_data, validation_data))
 
     if mode == "train":
         print("进入construct函数, 模式为: train, 共读取到 {} 行训练数据和 {} 行验证数据".format(
-            len(train_data), len(validation_data)
+            len(final_train_data), len(final_validation_data)
         ))
-        return train_data, validation_data
+        return final_train_data, final_validation_data
     else:
-        print("进入construct函数, 模式为: test, 共读取到 {} 行测试数据".format(len(test_data)))
-        return test_data
+        print("进入construct函数, 模式为: test, 共读取到 {} 行测试数据".format(len(final_test_data)))
+        return final_test_data
 
 
 # construct("train", 1, True, 15)
+# get_numpy()

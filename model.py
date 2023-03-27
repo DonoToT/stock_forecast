@@ -53,14 +53,16 @@ class ClsModel4(nn.Module):
     def __init__(self, p=0.1):
         super().__init__()
         self.linear1 = nn.Linear(30, 64)
+        self.linear2 = nn.Linear(64, 32)
+        self.linear3 = nn.Linear(32, 10)
         self.relu = nn.LeakyReLU(0.1)
         self.dropout = nn.Dropout(p=p)
-        self.linear2 = nn.Linear(64, 10)
 
     def forward(self, x):
         x = self.relu(self.linear1(x))
-        x = self.dropout(x)
-        x = self.linear2(x)
+        # x = self.dropout(x)
+        x = self.relu(self.linear2(x))
+        x = self.linear3(x)
         return x
 
 #
