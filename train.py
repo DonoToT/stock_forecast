@@ -90,9 +90,9 @@ def tot_train(model, optimizer, writer, epoch, x, y, days):
             optimizer.step()
 
             total_train_step = total_train_step + 1
-            # if total_train_step % 100 == 0:
-            #     print("训练次数: {}, Loss: {}".format(total_train_step, loss.item()))
-            #     writer.add_scalar("train_loss", loss.item(), total_train_step)
+            if total_train_step % 100 == 0:
+                # print("训练次数: {}, Loss: {}".format(total_train_step, loss.item()))
+                writer.add_scalar("train_loss", total_train_loss, total_train_step)
 
         print("整体训练集上的Loss: {}, 误差值带来的Loss: {}".format(total_train_loss, total_train_loss2))
         print("整体训练集上的正确率: {}".format(total_accuracy / train_data_size))
@@ -125,10 +125,11 @@ def tot_train(model, optimizer, writer, epoch, x, y, days):
         print("整体测试集上的Loss: {}, 误差值带来的Loss: {}".format(total_test_loss, total_test_loss2))
         print("整体测试集上的正确率: {}".format(total_accuracy / test_data_size))
 
-        writer.add_scalar("test_loss", total_test_loss, total_test_step)
-        writer.add_scalar("test_accuracy", total_accuracy / test_data_size, total_test_step)
-
         total_test_step = total_test_step + 1
+        if total_test_step % 100 == 0:
+            # print("训练次数: {}, Loss: {}".format(total_train_step, loss.item()))
+            writer.add_scalar("test_loss", total_test_loss, total_test_step)
+            writer.add_scalar("test_accuracy", total_accuracy / test_data_size, total_test_step)
         if i % 100 == 0:
             torch.save(model, "./models/stock_forecast_{}days.pth".format(days))
 
