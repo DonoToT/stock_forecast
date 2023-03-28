@@ -71,7 +71,7 @@ def construct(mode="train", days=3, type=True, fw=30):
     final_validation_data = np.empty((0, fw * 2 + 1))
     final_test_data = np.empty((0, fw * 2 + 1))
 
-    for i in range(10):
+    for i in range(3):
         data_array, rows = get_numpy(i)
         validation_size = int((rows - (days + fw - 1)) / 7)
         test_size = validation_size
