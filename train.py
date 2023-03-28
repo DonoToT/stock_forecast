@@ -218,6 +218,8 @@ def train(days=3, epoch=100, learning_rate=1e-2, choose_model=1, type=True, fw=3
         model = ClsModel3().to(device)
     elif choose_model == 4:
         model = ClsModel4().to(device)
+    elif choose_model == 5:
+        model = ClsModel5().to(device)
 
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
     if type:
@@ -228,7 +230,7 @@ def train(days=3, epoch=100, learning_rate=1e-2, choose_model=1, type=True, fw=3
     writer.close()
 
 
-train(days=1, epoch=3000, learning_rate=1e-2, choose_model=4, type=True, fw=15)
+train(days=1, epoch=10000, learning_rate=1e-2, choose_model=5, type=True, fw=15)
 # train1()
 # train2()
 # train3()
