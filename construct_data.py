@@ -71,47 +71,48 @@ def construct(mode="train", days=3, type=True, fw=30):
     final_validation_data = np.empty((0, fw * 2 + 1))
     final_test_data = np.empty((0, fw * 2 + 1))
 
-    data_array, rows = get_numpy(10)
-    validation_size = int((rows - (days + fw - 1)) / 7)
-    test_size = validation_size
-    if (rows - (days + fw - 1)) % 7 > 0:
-        validation_size += 1
-    if (rows - (days + fw - 1)) % 7 > 1:
-        test_size += 1
+    for i in range(10):
+        data_array, rows = get_numpy(i)
+        validation_size = int((rows - (days + fw - 1)) / 7)
+        test_size = validation_size
+        if (rows - (days + fw - 1)) % 7 > 0:
+            validation_size += 1
+        if (rows - (days + fw - 1)) % 7 > 1:
+            test_size += 1
 
-    train_size = rows - (days + fw - 1) - test_size - validation_size
+        train_size = rows - (days + fw - 1) - test_size - validation_size
 
-    train_data = np.empty((train_size, fw * 2 + 1))
-    validation_data = np.empty((validation_size, fw * 2 + 1))
-    test_data = np.empty((test_size, fw * 2 + 1))
-    tri = 0
-    vi = 0
-    tei = 0
-    for i in range(rows - (days + fw - 1)):
-        one_data = np.empty(fw * 2 + 1)
-        for j in range(fw):
-            one_data[j] = data_array[i + j][2]
-            one_data[j + fw] = data_array[i + j][3]
-        if type:
-            one_data[fw * 2] = map_range((data_array[i + days + fw - 1][0] - data_array[i + fw - 1][0]) /
-                                     data_array[i + fw - 1][0] * 100)
-        else:
-            one_data[fw * 2] = (data_array[i + days + fw - 1][0] - data_array[i + fw - 1][0]) / \
-                               data_array[i + fw - 1][0] * 100
-        # print(one_data)
-        if i % 7 == 1:
-            test_data[tei] = one_data
-            tei += 1
-        elif i % 7 == 0:
-            validation_data[vi] = one_data
-            vi += 1
-        else:
-            train_data[tri] = one_data
-            tri += 1
+        train_data = np.empty((train_size, fw * 2 + 1))
+        validation_data = np.empty((validation_size, fw * 2 + 1))
+        test_data = np.empty((test_size, fw * 2 + 1))
+        tri = 0
+        vi = 0
+        tei = 0
+        for i in range(rows - (days + fw - 1)):
+            one_data = np.empty(fw * 2 + 1)
+            for j in range(fw):
+                one_data[j] = data_array[i + j][2]
+                one_data[j + fw] = data_array[i + j][3]
+            if type:
+                one_data[fw * 2] = map_range((data_array[i + days + fw - 1][0] - data_array[i + fw - 1][0]) /
+                                         data_array[i + fw - 1][0] * 100)
+            else:
+                one_data[fw * 2] = (data_array[i + days + fw - 1][0] - data_array[i + fw - 1][0]) / \
+                                   data_array[i + fw - 1][0] * 100
+            # print(one_data)
+            if i % 7 == 1:
+                test_data[tei] = one_data
+                tei += 1
+            elif i % 7 == 0:
+                validation_data[vi] = one_data
+                vi += 1
+            else:
+                train_data[tri] = one_data
+                tri += 1
 
-    final_train_data = np.vstack((final_train_data, train_data))
-    final_test_data = np.vstack((final_test_data, test_data))
-    final_validation_data = np.vstack((final_validation_data, validation_data))
+        final_train_data = np.vstack((final_train_data, train_data))
+        final_test_data = np.vstack((final_test_data, test_data))
+        final_validation_data = np.vstack((final_validation_data, validation_data))
 
     if mode == "train":
         print("进入construct函数, 模式为: train, 共读取到 {} 行训练数据和 {} 行验证数据".format(
