@@ -8,7 +8,8 @@ print('login respond  error_msg:'+lg.error_msg)
 
 
 for i in range(10):
-    rs = bs.query_history_k_data_plus("sh.60000{}".format(i),
+
+    rs = bs.query_history_k_data_plus("sh.00000{}".format(i),
         "date,code,open,high,low,close,preclose,volume,amount,adjustflag,turn,tradestatus,pctChg,isST",
         start_date='2000-01-01', end_date='2023-03-26',
         frequency="d", adjustflag="3")
@@ -22,7 +23,7 @@ for i in range(10):
         data_list.append(rs.get_row_data())
     result = pd.DataFrame(data_list, columns=rs.fields)
     # 结果集输出到csv文件
-    result.to_csv("./dataset/dataset_total{}.csv".format(i), index=False)
+    result.to_csv("./dataset/dataset_total2{}.csv".format(i), index=False)
     print(result)
 
 bs.logout()

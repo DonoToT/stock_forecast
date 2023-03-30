@@ -29,7 +29,7 @@ def map_range(x):
 
 
 def map_range2(x):
-    if x < 5:
+    if x < 20:
         return 0
     else:
         return 1
@@ -38,7 +38,7 @@ def map_range2(x):
 def get_numpy(index):
     # 打开csv文件并创建reader对象
     totlist = list()
-    with open('dataset/dataset_total{}.csv'.format(index), newline='') as csvfile:
+    with open('dataset/dataset_total2{}.csv'.format(index), newline='') as csvfile:
         reader = csv.reader(csvfile, delimiter=',')
         next(reader)  # 去掉头标签
         lists = list(reader)  # 加载到二维列表中
@@ -54,17 +54,20 @@ def get_numpy(index):
             i += 1
 
     str_array = np.array(totlist)  # 转换为NumPy数组
+    if len(str_array.shape) == 1:
+        print("进入get_numpy函数, dataset_total2{}中数据不存在".format(index))
+        return np.zeros((1, 4)), -1
+    else:
+        rows, cols = str_array.shape
+        float_array = np.zeros((rows, 4))
+        float_array[:, 0] = str_array[:, 5].astype(float)
+        float_array[:, 1] = str_array[:, 6].astype(float)
+        float_array[:, 2] = str_array[:, 10].astype(float)
+        float_array[:, 3] = str_array[:, 12].astype(float)
 
-    rows, cols = str_array.shape
-    float_array = np.zeros((rows, 4))
-    float_array[:, 0] = str_array[:, 5].astype(float)
-    float_array[:, 1] = str_array[:, 6].astype(float)
-    float_array[:, 2] = str_array[:, 10].astype(float)
-    float_array[:, 3] = str_array[:, 12].astype(float)
+        print("进入get_numpy函数, dataset_total2{}读取完毕, 共输出{}行数据".format(index, rows))
 
-    print("进入get_numpy函数, dataset_total{}读取完毕, 共输出{}行数据".format(index, rows))
-
-    return float_array, rows
+        return float_array, rows
 
 
 """
@@ -80,6 +83,8 @@ def construct(mode="train", days=3, type=True, fw=30):
 
     for i in range(10):
         data_array, rows = get_numpy(i)
+        if rows == -1:
+            continue
         validation_size = int((rows - (days + fw - 1)) / 10)
         test_size = validation_size
         if (rows - (days + fw - 1)) % 10 > 0:

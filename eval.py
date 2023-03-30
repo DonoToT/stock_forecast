@@ -38,7 +38,7 @@ def eval(mode="test", days=1, probability=70):
     test_data = construct_data.construct(mode, days=days, type=True, fw=15)
     # test_data = construct_data.construct_test()
     test_data_size = len(test_data)
-    model = torch.load("./models/stock_forecast_1days(03281802_4724).pth", map_location=torch.device('cuda'))
+    model = torch.load("./models/stock_forecast_5days_best.pth", map_location=torch.device('cuda'))
     model.eval()
 
     lists = np.empty(test_data_size, dtype=np.int64)
@@ -82,7 +82,7 @@ def eval(mode="test", days=1, probability=70):
             tot_cnt += 1
         print("")
 
-        #    分析数据
+        # 分析数据
         tot_cnt = 0
         for j in output:
             prob = j / sum * 100
@@ -111,4 +111,80 @@ def eval(mode="test", days=1, probability=70):
     return lists
 
 
-eval(probability=50)
+def eval2(mode="test", days=1, probability=70):
+    test_data = construct_data.construct(mode, days=days, type=True, fw=15)
+    # test_data = construct_data.construct_test()
+    test_data_size = len(test_data)
+    model = torch.load("./models/stock_forecast_5days_best.pth", map_location=torch.device('cuda'))
+    model.eval()
+
+    lists = np.empty(test_data_size, dtype=np.int64)
+
+    seventy_cnt = 0
+    one = 0
+    zero = 0
+    right = 0
+    wrong = 0
+
+    for i in range(test_data_size):
+        temp = torch.tensor(test_data[i, :-1]).to(torch.float32)
+        target = test_data[i, -1]
+        # print(temp)
+        temp = temp.unsqueeze(0)
+        # print(temp)
+        output = model(temp.to('cuda')).squeeze(0)
+        output = output.cpu()
+        output = output.detach().numpy()
+        sum = output.sum()
+
+        print("第{}行数据目标为{}, 预测概率为: ".format(i, target), end="")
+        tot_cnt = 0
+
+        # 对外传参
+        # flag = True
+        # for j in output:
+        #     prob = j / sum * 100
+        #     if prob >= probability:
+        #         flag = False
+        #         lists[i] = tot_cnt
+        #     tot_cnt += 1
+        # if flag:
+        #     lists[i] = -1
+
+        # 展开预估的所有概率
+        tot_cnt = 0
+        for j in output:
+            print("[{}]:{:.4}%".format(tot_cnt, j / sum * 100), end="\t")
+            tot_cnt += 1
+        print("")
+
+        # 分析数据
+        tot_cnt = 0
+        for j in output:
+            prob = j / sum * 100
+            if prob >= probability:
+                seventy_cnt += 1
+                if tot_cnt == 0:
+                    zero += 1
+                else:
+                    one += 1
+                print("[{}]:{:.4}%".format(tot_cnt, j / sum * 100), end="\t")
+                if int(target + 0.1) == tot_cnt:
+                    right += 1
+                else:
+                    wrong += 1
+
+            tot_cnt += 1
+        print("")
+    print("测试数据共有:{}个".format(test_data_size))
+    print("预测概率最大值大于{}%的共有:{}".format(probability, seventy_cnt))
+    print("其中预测区间正确的共有:{}".format(right))
+    print("其他(错误)的共有:{}".format(wrong))
+    print("预测正确概率为:{}".format(right/seventy_cnt))
+    print("预测为0的数量为:{}, 预测为1的数量为:{}".format(zero, one))
+
+    return lists
+
+
+# eval(probability=70, days=5)
+eval2(probability=70, days=5)
