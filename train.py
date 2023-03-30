@@ -42,8 +42,8 @@ def get_loss_weight(dataset, weight=0.1):
 
 
 def tot_train(model, optimizer, writer, epoch, x, y, days):
-    train_dataloader = DataLoader(x, batch_size=16, shuffle=True)
-    test_dataloader = DataLoader(y, batch_size=16, shuffle=True)
+    train_dataloader = DataLoader(x, batch_size=32, shuffle=True)
+    test_dataloader = DataLoader(y, batch_size=32, shuffle=True)
     train_data_size = len(x)
     test_data_size = len(y)
     total_train_step = 0
@@ -51,7 +51,7 @@ def tot_train(model, optimizer, writer, epoch, x, y, days):
 
     # 定义损失函数的权重
     # 验证集数据不需要增大少样本的权重(大概)
-    train_weights = get_loss_weight(x, 0.05)
+    train_weights = get_loss_weight(x, 0.005)
     train_loss_fn = nn.CrossEntropyLoss(weight=train_weights).to(device)
     test_loss_fn = nn.CrossEntropyLoss().to(device)
 
@@ -72,16 +72,16 @@ def tot_train(model, optimizer, writer, epoch, x, y, days):
             target = target.to(device)
             outputs = model(feature)
 
-            probs = torch.softmax(outputs, dim=1)
-            centers = torch.sum(probs * torch.arange(2).to(device), dim=1)
-            distances = torch.pow(centers - target, 2)
-            dis_factor = 0.005
-
-            loss = train_loss_fn(outputs, target) + torch.sum(distances) * dis_factor
-            # loss = train_loss_fn(outputs, target)
+            # probs = torch.softmax(outputs, dim=1)
+            # centers = torch.sum(probs * torch.arange(2).to(device), dim=1)
+            # distances = torch.pow(centers - target, 2)
+            # dis_factor = 0.005
+            #
+            # loss = train_loss_fn(outputs, target) + torch.sum(distances) * dis_factor
+            loss = train_loss_fn(outputs, target)
 
             total_train_loss = total_train_loss + loss.item()
-            total_train_loss2 = total_train_loss2 + torch.sum(distances) * dis_factor
+            # total_train_loss2 = total_train_loss2 + torch.sum(distances) * dis_factor
             accuracy = (outputs.argmax(1) == target).sum()
             total_accuracy = total_accuracy + accuracy
 
@@ -90,9 +90,9 @@ def tot_train(model, optimizer, writer, epoch, x, y, days):
             optimizer.step()
 
             total_train_step = total_train_step + 1
-            if total_train_step % 100 == 0:
-                # print("训练次数: {}, Loss: {}".format(total_train_step, loss.item()))
-                writer.add_scalar("train_loss", total_train_loss, total_train_step)
+            # if total_train_step % 100 == 0:
+            #     # print("训练次数: {}, Loss: {}".format(total_train_step, loss.item()))
+            #     writer.add_scalar("train_loss", total_train_loss, total_train_step)
 
         print("整体训练集上的Loss: {}, 误差值带来的Loss: {}".format(total_train_loss, total_train_loss2))
         print("整体训练集上的正确率: {}".format(total_accuracy / train_data_size))
@@ -109,16 +109,16 @@ def tot_train(model, optimizer, writer, epoch, x, y, days):
                 target = target.to(device)
                 outputs = model(feature)
 
-                probs = torch.softmax(outputs, dim=1)
-                centers = torch.sum(probs * torch.arange(2).to(device), dim=1)
-                distances = torch.pow(centers - target, 2)
-                dis_factor = 0.005
-
-                loss = test_loss_fn(outputs, target) + torch.sum(distances) * dis_factor
-                # loss = test_loss_fn(outputs, target)
+                # probs = torch.softmax(outputs, dim=1)
+                # centers = torch.sum(probs * torch.arange(2).to(device), dim=1)
+                # distances = torch.pow(centers - target, 2)
+                # dis_factor = 0.005
+                #
+                # loss = test_loss_fn(outputs, target) + torch.sum(distances) * dis_factor
+                loss = test_loss_fn(outputs, target)
 
                 total_test_loss = total_test_loss + loss.item()
-                total_test_loss2 = total_test_loss2 + torch.sum(distances) * dis_factor
+                # total_test_loss2 = total_test_loss2 + torch.sum(distances) * dis_factor
                 accuracy = (outputs.argmax(1) == target).sum()
                 total_accuracy = total_accuracy + accuracy
 
@@ -132,8 +132,11 @@ def tot_train(model, optimizer, writer, epoch, x, y, days):
             writer.add_scalar("test_accuracy", total_accuracy / test_data_size, total_test_step)
         if best_acc < total_accuracy / test_data_size:
             best_acc = total_accuracy / test_data_size
-            torch.save(model, "./models/stock_forecast_{}days.pth".format(days))
+            torch.save(model, "./models/stock_forecast_{}days_best.pth".format(days))
             print("**********模型已保存, 最新概率为{}***********".format(best_acc))
+        if i % 100 == 0:
+            torch.save(model, "./models/stock_forecast_{}days_{}epoch.pth".format(days, i))
+            print("**********模型已保存, 当前概率为{}***********".format(total_accuracy / test_data_size))
 
 
 def tot_train2(model, optimizer, writer, epoch, x, y, days):
