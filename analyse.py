@@ -12,68 +12,13 @@ def chg(now, last):
     return (now - last) / last * 10
 
 
-def eval1():
-    train_data, test_data = construct_data.construct()
-    test_data_size = len(test_data)
-    model = torch.load("./models/stock_forecast1 (1).pth", map_location=torch.device('cuda'))
-    model.eval()
-
-    lists = np.empty(test_data_size, dtype=np.int64)
-
-    for i in range(test_data_size):
-        temp = torch.tensor(test_data[i,:-1]).to(torch.float32)
-        output = model(temp.to('cuda'))
-        output = output.cpu()
-        output = output.detach().numpy()
-        sum = output.sum()
-
-        tot_cnt = 0
-
-        flag = True
-        for j in output:
-            prob = j / sum * 100
-            if prob >= 50:
-                flag = False
-                lists[i] = tot_cnt
-            tot_cnt += 1
-        if flag:
-            lists[i] = -1
-
-    return lists
-
-
-def eval2():
-    test_data = construct_data.construct_two(False)
-    test_data_size = len(test_data)
-    model = torch.load("./models/stock_forecast_2(0311_1846).pth", map_location=torch.device('cuda'))
-    model.eval()
-
-    lists = np.empty(test_data_size, dtype=np.int64)
-
-    for i in range(test_data_size):
-        temp = torch.tensor(test_data[i,:-1]).to(torch.float32)
-        output = model(temp.to('cuda'))
-        output = output.cpu()
-        output = output.detach().numpy()
-        sum = output.sum()
-
-        tot_cnt = 0
-
-        flag = True
-        for j in output:
-            prob = j / sum * 100
-            if prob >= 90:
-                flag = False
-                lists[i] = tot_cnt
-            tot_cnt += 1
-        if flag:
-            lists[i] = -1
-
-    return lists
-
-
-def analyse(mode="test", days=3, probablity=70):
-    tot_array, rows = construct_data.get_numpy("test")
+def analyse(mode="test", days=1, probablity=70, fw=15):
+    tot_array = np.zeros((0, 4))
+    rows = 0
+    for i in range(3):
+        one_array, row = construct_data.get_numpy(i)
+        tot_array = np.vstack((tot_array, one_array))
+        rows += row
     lists = eval.eval(mode, days, probablity)
 
     day_less = 0
@@ -87,7 +32,7 @@ def analyse(mode="test", days=3, probablity=70):
     loc = ["低于-10%", "-10%~-5%", "-5%~-3%", "-3%~-1%", "-1%~0%", "0%~1%", "1%~3%", "3%~5%", "5%~10%", "高于10%"]
     for i in range(len(lists)):
         print("第{}天".format(i + 1), end=' ')
-        now_chg = chg(tot_array[i + (29 + days)][0], tot_array[i + 29][0])
+        now_chg = chg(tot_array[i + (fw - 1 + days)][0], tot_array[i + fw - 1][0])
         if lists[i] == -1:
             day_less += 1
             print("该天没有概率大于{}的区间".format(probablity))
@@ -103,9 +48,9 @@ def analyse(mode="test", days=3, probablity=70):
                 day_win += 1
             else:
                 day_los += 1
-            day_stock = 100.0 / tot_array[i + 29][0]
-            tot_money += day_stock * tot_array[i + (29 + days)][0] - day_stock * tot_array[i + 29][0]
-            print("当日盈亏:{}, 总体盈亏:{}".format(day_stock * tot_array[i + (29 + days)][0] - day_stock * tot_array[i + 29][0],
+            day_stock = 100.0 / tot_array[i + fw - 1][0]
+            tot_money += day_stock * tot_array[i + (fw - 1 + days)][0] - day_stock * tot_array[i + fw - 1][0]
+            print("当日盈亏:{}, 总体盈亏:{}".format(day_stock * tot_array[i + (fw - 1 + days)][0] - day_stock * tot_array[i + fw - 1][0],
                                             tot_money))
         x.append(i)
         # z.append(day_stock * test_array[i][0] - day_stock * test_array[i][1])
@@ -124,4 +69,4 @@ def analyse(mode="test", days=3, probablity=70):
     # 显示图像
     plt.show()
 
-analyse(mode="test", days=3, probablity=70)
+analyse(mode="test", days=1, probablity=70, fw=15)

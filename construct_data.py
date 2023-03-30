@@ -28,6 +28,13 @@ def map_range(x):
         return 9
 
 
+def map_range2(x):
+    if x < 5:
+        return 0
+    else:
+        return 1
+
+
 def get_numpy(index):
     # 打开csv文件并创建reader对象
     totlist = list()
@@ -71,13 +78,13 @@ def construct(mode="train", days=3, type=True, fw=30):
     final_validation_data = np.empty((0, fw * 2 + 1))
     final_test_data = np.empty((0, fw * 2 + 1))
 
-    for i in range(3):
+    for i in range(10):
         data_array, rows = get_numpy(i)
-        validation_size = int((rows - (days + fw - 1)) / 7)
+        validation_size = int((rows - (days + fw - 1)) / 10)
         test_size = validation_size
-        if (rows - (days + fw - 1)) % 7 > 0:
+        if (rows - (days + fw - 1)) % 10 > 0:
             validation_size += 1
-        if (rows - (days + fw - 1)) % 7 > 1:
+        if (rows - (days + fw - 1)) % 10 > 1:
             test_size += 1
 
         train_size = rows - (days + fw - 1) - test_size - validation_size
@@ -94,16 +101,16 @@ def construct(mode="train", days=3, type=True, fw=30):
                 one_data[j] = data_array[i + j][2]
                 one_data[j + fw] = data_array[i + j][3]
             if type:
-                one_data[fw * 2] = map_range((data_array[i + days + fw - 1][0] - data_array[i + fw - 1][0]) /
+                one_data[fw * 2] = map_range2((data_array[i + days + fw - 1][0] - data_array[i + fw - 1][0]) /
                                          data_array[i + fw - 1][0] * 100)
             else:
                 one_data[fw * 2] = (data_array[i + days + fw - 1][0] - data_array[i + fw - 1][0]) / \
                                    data_array[i + fw - 1][0] * 100
             # print(one_data)
-            if i % 7 == 1:
+            if i % 10 == 1:
                 test_data[tei] = one_data
                 tei += 1
-            elif i % 7 == 0:
+            elif i % 10 == 0:
                 validation_data[vi] = one_data
                 vi += 1
             else:
@@ -124,5 +131,5 @@ def construct(mode="train", days=3, type=True, fw=30):
         return final_test_data
 
 
-# construct("train", 1, True, 15)
+# construct("train", 5, True, 15)
 # get_numpy()

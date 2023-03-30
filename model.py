@@ -82,6 +82,18 @@ class ClsModel5(nn.Module):
         x = self.linear4(x)
         return x
 
+
+class ClsModel6(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.linear1 = nn.Linear(30, 30)
+        self.linear2 = nn.Linear(30, 2)
+
+    def forward(self, x):
+        x = torch.sigmoid(self.linear1(x))
+        x = torch.sigmoid(self.linear2(x))
+        return x
+
 #
 # input_x = torch.randn(1, 60)
 # model1 = ClsModel()

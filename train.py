@@ -29,7 +29,7 @@ def change_data(x):
 
 
 def get_loss_weight(dataset, weight=0.1):
-    lenth = 10
+    lenth = 2
     my_weight = [0.0] * lenth
     for i in dataset:
         my_weight[i[-1].item()] += 1
@@ -42,8 +42,8 @@ def get_loss_weight(dataset, weight=0.1):
 
 
 def tot_train(model, optimizer, writer, epoch, x, y, days):
-    train_dataloader = DataLoader(x, batch_size=64, shuffle=True)
-    test_dataloader = DataLoader(y, batch_size=64, shuffle=True)
+    train_dataloader = DataLoader(x, batch_size=16, shuffle=True)
+    test_dataloader = DataLoader(y, batch_size=16, shuffle=True)
     train_data_size = len(x)
     test_data_size = len(y)
     total_train_step = 0
@@ -57,7 +57,7 @@ def tot_train(model, optimizer, writer, epoch, x, y, days):
 
 
     # loss_fn = nn.CrossEntropyLoss().to(device)
-
+    best_acc = 0
     for i in range(epoch):
         print("------第{}轮训练开始------".format(i + 1))
 
@@ -73,7 +73,7 @@ def tot_train(model, optimizer, writer, epoch, x, y, days):
             outputs = model(feature)
 
             probs = torch.softmax(outputs, dim=1)
-            centers = torch.sum(probs * torch.arange(10).to(device), dim=1)
+            centers = torch.sum(probs * torch.arange(2).to(device), dim=1)
             distances = torch.pow(centers - target, 2)
             dis_factor = 0.005
 
@@ -110,7 +110,7 @@ def tot_train(model, optimizer, writer, epoch, x, y, days):
                 outputs = model(feature)
 
                 probs = torch.softmax(outputs, dim=1)
-                centers = torch.sum(probs * torch.arange(10).to(device), dim=1)
+                centers = torch.sum(probs * torch.arange(2).to(device), dim=1)
                 distances = torch.pow(centers - target, 2)
                 dis_factor = 0.005
 
@@ -130,13 +130,15 @@ def tot_train(model, optimizer, writer, epoch, x, y, days):
             # print("训练次数: {}, Loss: {}".format(total_train_step, loss.item()))
             writer.add_scalar("test_loss", total_test_loss, total_test_step)
             writer.add_scalar("test_accuracy", total_accuracy / test_data_size, total_test_step)
-        if i % 100 == 0:
+        if best_acc < total_accuracy / test_data_size:
+            best_acc = total_accuracy / test_data_size
             torch.save(model, "./models/stock_forecast_{}days.pth".format(days))
+            print("**********模型已保存, 最新概率为{}***********".format(best_acc))
 
 
 def tot_train2(model, optimizer, writer, epoch, x, y, days):
-    train_dataloader = DataLoader(x, batch_size=64, shuffle=True)
-    test_dataloader = DataLoader(y, batch_size=64, shuffle=True)
+    train_dataloader = DataLoader(x, batch_size=16, shuffle=True)
+    test_dataloader = DataLoader(y, batch_size=16, shuffle=True)
     train_data_size = len(x)
     test_data_size = len(y)
     total_train_step = 0
@@ -221,6 +223,8 @@ def train(days=3, epoch=100, learning_rate=1e-2, choose_model=1, type=True, fw=3
         model = ClsModel4().to(device)
     elif choose_model == 5:
         model = ClsModel5().to(device)
+    elif choose_model == 6:
+        model = ClsModel6().to(device)
 
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
     if type:
@@ -231,7 +235,7 @@ def train(days=3, epoch=100, learning_rate=1e-2, choose_model=1, type=True, fw=3
     writer.close()
 
 
-train(days=1, epoch=10000, learning_rate=1e-2, choose_model=5, type=True, fw=15)
+train(days=5, epoch=10000, learning_rate=1e-3, choose_model=6, type=True, fw=15)
 # train1()
 # train2()
 # train3()

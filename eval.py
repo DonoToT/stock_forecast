@@ -38,7 +38,7 @@ def eval(mode="test", days=1, probability=70):
     test_data = construct_data.construct(mode, days=days, type=True, fw=15)
     # test_data = construct_data.construct_test()
     test_data_size = len(test_data)
-    model = torch.load("./models/stock_forecast_1days(03281434_2120).pth", map_location=torch.device('cuda'))
+    model = torch.load("./models/stock_forecast_1days(03281802_4724).pth", map_location=torch.device('cuda'))
     model.eval()
 
     lists = np.empty(test_data_size, dtype=np.int64)
